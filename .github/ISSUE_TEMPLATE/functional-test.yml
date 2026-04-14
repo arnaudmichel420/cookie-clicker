@@ -1,0 +1,74 @@
+name: Test fonctionnel / E2E
+description: Proposer ou suivre un scenario de test utilisateur automatise avec Playwright.
+title: "test(e2e): "
+labels: ["test", "e2e", "a-trier"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Utilisez ce template pour un parcours utilisateur critique : inscription, connexion, clic sur le cookie, achat d'upgrade, sauvegarde de progression.
+  - type: input
+    id: parcours
+    attributes:
+      label: Parcours utilisateur
+      placeholder: "Exemple : acheter un auto-clicker apres avoir accumule assez de cookies"
+    validations:
+      required: true
+  - type: textarea
+    id: objectif
+    attributes:
+      label: Objectif du test
+      description: Quel risque fonctionnel ce test doit-il couvrir ?
+      placeholder: "Verifier que l'achat d'un auto-clicker retire le bon cout et augmente la production automatique."
+    validations:
+      required: true
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Scenario Given / When / Then
+      placeholder: |
+        Given un utilisateur connecte avec 100 cookies
+        When il achete un auto-clicker
+        Then son solde de cookies diminue du cout de l'upgrade
+        And les cookies augmentent automatiquement apres quelques secondes
+    validations:
+      required: true
+  - type: textarea
+    id: donnees
+    attributes:
+      label: Donnees de test
+      description: Precisez les comptes, valeurs initiales, niveaux d'upgrade ou donnees SQLite necessaires.
+      placeholder: |
+        Utilisateur : test@example.com
+        Cookies initiaux : 100
+        Upgrade : auto-clicker niveau 1
+    validations:
+      required: false
+  - type: textarea
+    id: assertions
+    attributes:
+      label: Assertions attendues
+      placeholder: |
+        - Le bouton d'achat est visible
+        - Le compteur de cookies est mis a jour
+        - Le niveau de l'upgrade augmente
+        - La progression persiste apres reconnexion
+    validations:
+      required: true
+  - type: checkboxes
+    id: couverture
+    attributes:
+      label: Couverture attendue
+      options:
+        - label: Cas nominal
+        - label: Cas d'erreur
+        - label: Cas limite
+        - label: Persistance SQLite
+        - label: Interaction utilisateur
+  - type: textarea
+    id: commande
+    attributes:
+      label: Commande de verification
+      value: "npm run test:e2e"
+    validations:
+      required: true
