@@ -1,0 +1,60 @@
+name: Test unitaire
+description: Proposer ou suivre un test unitaire sur la logique metier.
+title: "test(unit): "
+labels: ["test", "unit", "a-trier"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Utilisez ce template pour couvrir la logique metier : calcul des cookies, couts d'amelioration, niveaux, production automatique, sauvegarde.
+  - type: input
+    id: module
+    attributes:
+      label: Module ou fonction cible
+      placeholder: "Exemple : calculateUpgradeCost, applyClickUpgrade, computeCookiesPerSecond"
+    validations:
+      required: true
+  - type: textarea
+    id: comportement
+    attributes:
+      label: Comportement a tester
+      placeholder: "Verifier que chaque niveau d'amelioration de clic ajoute +1 cookie par clic."
+    validations:
+      required: true
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Scenario Given / When / Then
+      placeholder: |
+        Given un joueur avec une amelioration de clic niveau 2
+        When il clique sur le cookie
+        Then son compteur augmente de 3 cookies
+    validations:
+      required: true
+  - type: textarea
+    id: cas
+    attributes:
+      label: Cas a couvrir
+      placeholder: |
+        - Niveau 0
+        - Niveau 1
+        - Niveau maximum
+        - Solde insuffisant
+        - Cout croissant
+    validations:
+      required: true
+  - type: textarea
+    id: mocks
+    attributes:
+      label: Mocks ou fixtures necessaires
+      description: Indiquez les donnees ou dependances a simuler.
+      placeholder: "Exemple : utilisateur en memoire, sauvegarde SQLite mockee, horloge fake pour l'auto-clicker."
+    validations:
+      required: false
+  - type: textarea
+    id: commande
+    attributes:
+      label: Commande de verification
+      value: "npm test"
+    validations:
+      required: true

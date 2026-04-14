@@ -1,0 +1,61 @@
+name: User story / Evolution
+description: Decrire une nouvelle fonctionnalite avec criteres d'acceptation et tests attendus.
+title: "feature: "
+labels: ["feature", "a-trier"]
+body:
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User story
+      description: Formulez le besoin du point de vue utilisateur.
+      placeholder: "En tant que joueur connecte, je veux acheter une amelioration de clic afin de gagner plus de cookies par clic."
+    validations:
+      required: true
+  - type: textarea
+    id: contexte
+    attributes:
+      label: Contexte fonctionnel
+      placeholder: "Expliquez le besoin, l'ecran concerne, les regles de gestion et les limites connues."
+    validations:
+      required: true
+  - type: textarea
+    id: criteres
+    attributes:
+      label: Criteres d'acceptation
+      description: Listez les conditions qui permettront de valider la fonctionnalite.
+      placeholder: |
+        - Le joueur peut acheter l'upgrade si son solde est suffisant
+        - Le cout est retire immediatement
+        - Le gain par clic augmente de +1
+        - La progression est sauvegardee
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Tests attendus
+      description: Precisez les tests unitaires et fonctionnels a prevoir.
+      placeholder: |
+        Tests unitaires :
+        - Calcul du nouveau gain par clic
+        - Refus d'achat si solde insuffisant
+
+        Tests E2E :
+        - Achat de l'upgrade depuis l'interface
+        - Verification du compteur apres un clic
+    validations:
+      required: true
+  - type: checkboxes
+    id: definition-done
+    attributes:
+      label: Definition of Done
+      options:
+        - label: La fonctionnalite est implementee
+          required: true
+        - label: Les tests unitaires sont ajoutes ou mis a jour
+          required: true
+        - label: Les tests E2E sont ajoutes ou mis a jour si le parcours utilisateur change
+          required: true
+        - label: La CI passe
+          required: true
+        - label: La documentation projet est mise a jour si necessaire
