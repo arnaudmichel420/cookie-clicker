@@ -1,0 +1,78 @@
+name: Anomalie
+description: Signaler un bug fonctionnel, technique ou de regression.
+title: "fix: "
+labels: ["bug", "a-trier"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de décrire l'anomalie avec assez de détails pour pouvoir la reproduire et ajouter le test associé.
+  - type: textarea
+    id: contexte
+    attributes:
+      label: Contexte
+      description: Sur quelle partie de l'application le problème apparaît-il ?
+      placeholder: "Exemple : achat d'auto-clicker, sauvegarde SQLite, compteur de cookies, connexion utilisateur..."
+    validations:
+      required: true
+  - type: textarea
+    id: etapes
+    attributes:
+      label: Etapes de reproduction
+      description: Listez les actions exactes à réaliser.
+      placeholder: |
+        1. Se connecter avec un utilisateur existant
+        2. Cliquer 10 fois sur le cookie
+        3. Acheter un auto-clicker
+        4. Attendre 5 secondes
+    validations:
+      required: true
+  - type: textarea
+    id: resultat-actuel
+    attributes:
+      label: Resultat actuel
+      description: Que se passe-t-il réellement ?
+      placeholder: "Le compteur reste bloque a 10 cookies."
+    validations:
+      required: true
+  - type: textarea
+    id: resultat-attendu
+    attributes:
+      label: Resultat attendu
+      description: Quel comportement devrait être observé ?
+      placeholder: "Le compteur augmente automatiquement selon le nombre et la vitesse des auto-clickers."
+    validations:
+      required: true
+  - type: textarea
+    id: scenario-test
+    attributes:
+      label: Scenario de test a ajouter
+      description: Decrivez le test qui doit couvrir cette anomalie au format Given/When/Then.
+      placeholder: |
+        Given un utilisateur avec 10 cookies et 1 auto-clicker
+        When 5 secondes s'ecoulent
+        Then le nombre de cookies augmente selon la production automatique attendue
+    validations:
+      required: true
+  - type: dropdown
+    id: type-test
+    attributes:
+      label: Type de test concerne
+      options:
+        - Test unitaire
+        - Test fonctionnel / E2E
+        - Les deux
+        - A determiner
+    validations:
+      required: true
+  - type: textarea
+    id: environnement
+    attributes:
+      label: Environnement
+      placeholder: |
+        OS :
+        Navigateur :
+        Version Node.js :
+        Commande lancee :
+    validations:
+      required: false
