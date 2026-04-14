@@ -1,4 +1,4 @@
-name: User story / Evolution
+name: Feature
 description: Decrire une nouvelle fonctionnalite avec criteres d'acceptation et tests attendus.
 title: "feature: "
 labels: ["feature", "a-trier"]
@@ -9,13 +9,6 @@ body:
       label: User story
       description: Formulez le besoin du point de vue utilisateur.
       placeholder: "En tant que joueur connecte, je veux acheter une amelioration de clic afin de gagner plus de cookies par clic."
-    validations:
-      required: true
-  - type: textarea
-    id: contexte
-    attributes:
-      label: Contexte fonctionnel
-      placeholder: "Expliquez le besoin, l'ecran concerne, les regles de gestion et les limites connues."
     validations:
       required: true
   - type: textarea
@@ -51,11 +44,7 @@ body:
       label: Definition of Done
       options:
         - label: La fonctionnalite est implementee
-          required: true
         - label: Les tests unitaires sont ajoutes ou mis a jour
-          required: true
         - label: Les tests E2E sont ajoutes ou mis a jour si le parcours utilisateur change
-          required: true
         - label: La CI passe
-          required: true
         - label: La documentation projet est mise a jour si necessaire
