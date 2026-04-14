@@ -24,5 +24,14 @@ export default [
         }
       ]
     }
+  },
+  {
+    files: ["tests/**/*.js"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.vitest
+      }
+    }
   }
 ];

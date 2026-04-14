@@ -7,6 +7,7 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "lint": "eslint .",
+    "test": "vitest run",
     "format": "prettier . --write",
     "format:check": "prettier . --check"
   },
@@ -26,6 +27,7 @@
     "@eslint/js": "^10.0.1",
     "eslint": "^10.2.0",
     "globals": "^17.5.0",
-    "prettier": "^3.8.2"
+    "prettier": "^3.8.2",
+    "vitest": "^4.1.4"
   }
 }
