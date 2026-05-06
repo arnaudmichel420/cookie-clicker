@@ -1,0 +1,318 @@
+@layer pages {
+  body.page-game {
+    min-height: 100vh;
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.04), transparent 32%),
+      radial-gradient(circle at 44% 28%, rgba(255, 215, 9, 0.14), transparent 19%),
+      radial-gradient(circle at 78% 70%, rgba(123, 254, 184, 0.1), transparent 22%),
+      linear-gradient(145deg, #000e25, #001533 54%, #012550);
+  }
+
+  .game-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 640px;
+    gap: 0;
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    transition: grid-template-columns 220ms ease;
+  }
+
+  .game-shell.is-shop-collapsed {
+    grid-template-columns: minmax(0, 1fr) 72px;
+  }
+
+  .game-board {
+    position: relative;
+    display: grid;
+    min-height: 100vh;
+    place-items: center;
+    padding: 120px 48px 72px;
+    overflow: hidden;
+  }
+
+  .cookie-counter {
+    position: absolute;
+    top: 28px;
+    left: 50%;
+    width: min(760px, calc(100% - 48px));
+    text-align: center;
+    transform: translateX(-50%);
+  }
+
+  .cookie-counter h1 {
+    margin-bottom: 0;
+    color: var(--gold);
+    font-size: clamp(2.2rem, 5vw, 4.2rem);
+  }
+
+  .game-brand {
+    position: absolute;
+    top: 28px;
+    left: 32px;
+    z-index: 2;
+    margin: 0;
+    color: #fff7e6;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-shadow: 0 2px 12px rgba(0, 14, 37, 0.4);
+  }
+
+  .game-stats {
+    position: absolute;
+    bottom: 32px;
+    left: 32px;
+    display: grid;
+    gap: 10px;
+    width: min(760px, calc(100% - 64px));
+  }
+
+  .stat-list {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .stat-card {
+    display: grid;
+    gap: 8px;
+    min-height: 110px;
+    padding: 16px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: rgba(1, 31, 69, 0.74);
+    box-shadow: 0 22px 70px rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(20px);
+  }
+
+  .stat-card dt {
+    color: rgba(255, 255, 255, 0.78);
+    font-family: "Be Vietnam Pro", sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .stat-card dd {
+    margin: 0;
+    align-self: end;
+    font-family: "Be Vietnam Pro", sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+  }
+
+  .stat-card-green {
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 42%),
+      rgba(0, 106, 65, 0.82);
+  }
+
+  .stat-card-green dd {
+    color: #cfffde;
+  }
+
+  .stat-card-gold {
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent 42%),
+      rgba(112, 93, 0, 0.9);
+  }
+
+  .stat-card-gold dd {
+    color: #ffd709;
+  }
+
+  .stat-card-red {
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 42%),
+      rgba(190, 9, 48, 0.84);
+  }
+
+  .stat-card-red dd {
+    color: #ffccd1;
+  }
+
+  .cookie-button {
+    position: relative;
+    justify-self: center;
+    width: min(42vw, 520px);
+    min-width: 280px;
+    aspect-ratio: 1;
+    padding: 0;
+    overflow: visible;
+    border-radius: 50%;
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.22), transparent 36%),
+      radial-gradient(circle at 45% 35%, #ffd709, #be0930 62%, #640013);
+    box-shadow:
+      0 32px 90px rgba(0, 0, 0, 0.34),
+      0 0 0 20px rgba(255, 215, 9, 0.08),
+      inset 0 3px 0 rgba(255, 255, 255, 0.22);
+    transition:
+      filter 160ms ease,
+      transform 160ms ease;
+  }
+
+  .cookie-button:hover {
+    filter: saturate(1.14) brightness(1.04);
+  }
+
+  .cookie-button:active,
+  .cookie-button.is-clicking {
+    transform: scale(0.95);
+  }
+
+  .cookie-halo {
+    position: absolute;
+    inset: 10%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3), transparent 62%);
+  }
+
+  .character-stage {
+    position: absolute;
+    inset: -12% -6% 4%;
+  }
+
+  .trump-frame {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0;
+    transform: scale(0.92) rotate(-2deg);
+    transition:
+      opacity 220ms ease,
+      transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .trump-frame-active {
+    opacity: 1;
+    transform: scale(var(--trump-scale, 1)) rotate(var(--trump-rotation, 0deg));
+  }
+
+  .page-game .feedback {
+    min-width: 0;
+    padding: 0;
+    border-radius: 0;
+    color: var(--muted);
+    text-align: left;
+    background: transparent;
+    backdrop-filter: none;
+  }
+
+  .page-game .feedback[data-state="success"] {
+    color: var(--success);
+  }
+
+  .page-game .feedback[data-state="error"] {
+    color: var(--danger);
+  }
+
+  .shop-panel {
+    position: relative;
+    align-self: stretch;
+    min-height: 100vh;
+    padding: 28px 24px;
+    border-radius: 0;
+    background:
+      linear-gradient(160deg, rgba(255, 255, 255, 0.08), transparent 30%),
+      rgba(1, 37, 80, 0.82);
+    box-shadow:
+      0 24px 80px rgba(0, 0, 0, 0.28),
+      inset 1px 0 0 rgba(153, 171, 209, 0.16);
+    backdrop-filter: blur(20px);
+    transition:
+      padding 220ms ease,
+      opacity 220ms ease;
+  }
+
+  .shop-toggle {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    margin: 0 0 28px auto;
+    place-items: center;
+    padding: 0;
+    color: var(--gold);
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.14), transparent 40%),
+      rgba(0, 19, 47, 0.9);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  }
+
+  .shop-toggle .ph {
+    font-size: 1.5rem;
+  }
+
+  .shop-head h2 {
+    margin: 0;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 2rem;
+  }
+
+  .game-shell.is-shop-collapsed .shop-panel {
+    padding: 16px 12px;
+  }
+
+  .game-shell.is-shop-collapsed .shop-toggle {
+    margin: 0 auto;
+  }
+
+  .game-shell.is-shop-collapsed .shop-head {
+    display: none;
+  }
+
+  @media (max-width: 860px) {
+    .game-shell {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    .game-board {
+      min-height: 78vh;
+      padding: 112px 16px 196px;
+    }
+
+    .cookie-counter h1 {
+      font-size: clamp(2.4rem, 13vw, 3.6rem);
+    }
+
+    .game-brand {
+      top: 20px;
+      left: 16px;
+      font-size: 1.2rem;
+    }
+
+    .game-stats {
+      right: 16px;
+      bottom: 18px;
+      left: 16px;
+      max-width: none;
+    }
+
+    .stat-list {
+      grid-template-columns: 1fr;
+    }
+
+    .stat-card {
+      min-height: 84px;
+    }
+
+    .cookie-button {
+      width: min(82vw, 360px);
+      min-width: 240px;
+    }
+
+    .shop-panel {
+      min-height: 180px;
+      padding: 20px;
+    }
+
+    .game-shell.is-shop-collapsed {
+      grid-template-columns: 1fr;
+    }
+  }
+}

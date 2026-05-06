@@ -1,8 +1,8 @@
 const PAGE_VIEWS = {
   home: {
-    title: "Authentification utilisateur",
+    title: "Sovereign Clicker",
     message:
-      "Choisissez une page dédiée pour créer votre compte, vous connecter ou retrouver votre session."
+      "Créez votre compte, connectez-vous et empilez les cookies avec une progression conservée."
   },
   login: {
     title: "Connexion",

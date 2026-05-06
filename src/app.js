@@ -5,17 +5,25 @@ const { createUserRepository } = require("./repositories/inMemoryUserRepository"
 const { createAuthService } = require("./services/authService");
 const { createPasswordService } = require("./services/passwordService");
 const { createTokenService } = require("./services/tokenService");
+const { createInMemorySaveRepository } = require("./repositories/inMemorySaveRepository");
+const { createGameService } = require("./services/gameService");
 const { createAuthRouter } = require("./routes/authRoutes");
+const { createGameRouter } = require("./routes/gameRoutes");
 const { createPageRouter } = require("./routes/pageRoutes");
 
 dotenv.config();
 
 function createApp() {
   const app = express();
+  const userRepository = createUserRepository();
+  const tokenService = createTokenService();
   const authService = createAuthService({
-    userRepository: createUserRepository(),
+    userRepository,
     passwordService: createPasswordService(),
-    tokenService: createTokenService()
+    tokenService
+  });
+  const gameService = createGameService({
+    saveRepository: createInMemorySaveRepository()
   });
 
   app.set("view engine", "ejs");
@@ -27,6 +35,7 @@ function createApp() {
 
   app.use(createPageRouter());
   app.use(createAuthRouter(authService));
+  app.use(createGameRouter({ authService, gameService }));
 
   return app;
 }

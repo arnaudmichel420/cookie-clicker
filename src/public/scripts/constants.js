@@ -1,5 +1,6 @@
 window.AUTH_ROUTES = {
   account: "/account",
+  game: "/game",
   login: "/login"
 };
 

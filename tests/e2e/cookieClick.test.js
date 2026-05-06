@@ -144,7 +144,7 @@ describe("cookie qui click", () => {
     expect(clickState.shouldAnimate).toBe(true);
   });
 
-  it("E2E 4 - affiche le nombre de cookies et les cookies generes par seconde", async () => {
+  it("E2E 4 - affiche les trump dollars et les statistiques du joueur", async () => {
     // Given : un utilisateur est connecte et possede des statistiques de progression
     const token = await createAuthenticatedUser();
     await clickCookie(token);
@@ -158,10 +158,12 @@ describe("cookie qui click", () => {
     });
     const html = await gameResponse.text();
 
-    // Then : son nombre de cookies et les cookies generes par seconde sont affiches
+    // Then : son nombre de trump dollars et ses statistiques sont affiches
     expect(gameResponse.status).toBe(200);
-    expect(html).toContain("2 cookies");
-    expect(html).toContain("cookies/sec");
+    expect(html).toContain("$2");
+    expect(html).toContain("Trump dollars par seconde");
+    expect(html).toContain("Trump dollars par click");
+    expect(html).toContain("Nombre d'upgrades");
   });
 
   it("E2E 5 - recharge le compteur avec les statistiques stockees en base", async () => {

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css"
+    />
+    <link rel="stylesheet" href="/styles/global.css" />
+    <link rel="stylesheet" href="/styles/pages/game.css" />
+  </head>
+  <body class="page-game">
+    <main class="game-shell" data-authenticated="<%= isAuthenticated %>">
+      <section class="game-board" aria-labelledby="game-title">
+        <p class="game-brand">Sovereign Clicker</p>
+
+        <div class="cookie-counter">
+          <p class="eyebrow">Trump dollars</p>
+          <h1 id="game-title"><span id="cookie-count">$<%= cookies %></span></h1>
+        </div>
+
+        <button
+          class="cookie-button"
+          id="cookie-button"
+          type="button"
+          aria-label="Gagner un trump dollar"
+        >
+          <span class="cookie-halo" aria-hidden="true"></span>
+          <span class="character-stage" aria-hidden="true">
+            <img
+              class="trump-frame trump-frame-active"
+              id="trump-frame-a"
+              src="/images/trump/trump-1%202.webp"
+              alt=""
+            />
+            <img class="trump-frame" id="trump-frame-b" src="/images/trump/trump-2%202.webp" alt="" />
+          </span>
+        </button>
+
+        <div class="game-stats" aria-label="Statistiques">
+          <dl class="stat-list">
+            <div class="stat-card stat-card-green">
+              <dt>Trump dollars par seconde</dt>
+              <dd><span id="cookies-per-second"><%= cookiesPerSecond %></span></dd>
+            </div>
+            <div class="stat-card stat-card-gold">
+              <dt>Trump dollars par click</dt>
+              <dd><span id="cookies-per-click">1</span></dd>
+            </div>
+            <div class="stat-card stat-card-red">
+              <dt>Nombre d'upgrades</dt>
+              <dd><span id="upgrade-count">0</span></dd>
+            </div>
+          </dl>
+          <p class="feedback" id="game-feedback" role="status"></p>
+        </div>
+      </section>
+
+      <aside class="shop-panel" aria-label="Améliorations">
+        <button class="shop-toggle" id="shop-toggle" type="button" aria-label="Rétracter la boutique">
+          <i class="ph ph-storefront" aria-hidden="true"></i>
+        </button>
+        <div class="shop-head">
+          <p class="eyebrow">Upgrades</p>
+          <h2>Améliorations</h2>
+        </div>
+      </aside>
+    </main>
+
+    <script src="/scripts/constants.js"></script>
+    <script src="/scripts/auth-client.js"></script>
+    <script src="/scripts/game-page.js"></script>
+  </body>
+</html>
