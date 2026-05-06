@@ -136,7 +136,7 @@ Then : l'upgrade achetée reste active et ses effets sont appliqués
 - Le son se lance quand j'achète une upgrade
 - Quand j'achète deux upgrades, les sons sont joués l'un après l'autre
 - Le son se lance quand je clique sur Trump
-- Quand je spamme les clics, les sons se superposent
+- Quand je spamme les clics, au maximum 2 sons de clic sont joues par seconde
 - L'autocliqueur ne lance pas de sons
 
 ## Tests E2E
@@ -147,11 +147,11 @@ Given : un utilisateur est connecte et arrive sur la page du jeu
 When : il clique sur Trump  
 Then : un son de clic est lance
 
-### E2E 2 - Superposition des sons au spam de clics
+### E2E 2 - Limitation des sons au spam de clics
 
 Given : un utilisateur est connecte et arrive sur la page du jeu  
 When : il clique plusieurs fois rapidement sur Trump  
-Then : les sons de clic se superposent sans attendre la fin du son precedent
+Then : au maximum 2 sons de clic sont joues pendant la meme seconde
 
 ### E2E 3 - Son a l'achat d'une upgrade
 

@@ -224,11 +224,22 @@ describe("cookie qui click", () => {
     expect(upgradeSoundResponse.status).toBe(200);
   });
 
+  it("E2E 13 - expose la musique de fond", async () => {
+    const constantsResponse = await fetch(`${BASE_URL}/scripts/constants.js`);
+    const constantsScript = await constantsResponse.text();
+    const backgroundMusicResponse = await fetch(`${BASE_URL}/sounds/usa-anthem.mp3`);
+
+    expect(constantsResponse.status).toBe(200);
+    expect(constantsScript).toContain('background: "/sounds/usa-anthem.mp3"');
+    expect(backgroundMusicResponse.status).toBe(200);
+  });
+
   it("E2E 11 - branche les sons uniquement sur les actions utilisateur", async () => {
     const gamePageResponse = await fetch(`${BASE_URL}/scripts/game-page.js`);
     const gamePageScript = await gamePageResponse.text();
 
     expect(gamePageResponse.status).toBe(200);
+    expect(gamePageScript).toContain("gameSoundEffects.startBackgroundMusic()");
     expect(gamePageScript).toContain("gameSoundEffects.playClickSound()");
     expect(gamePageScript).toContain("gameSoundEffects.playUpgradeSound()");
     expect(gamePageScript.indexOf("gameSoundEffects.playClickSound()")).toBeGreaterThan(
@@ -252,6 +263,8 @@ describe("cookie qui click", () => {
     expect(soundEffectsResponse.status).toBe(200);
     expect(soundEffectsScript).toContain("let upgradeQueue = Promise.resolve()");
     expect(soundEffectsScript).toContain("const queuedSound = upgradeQueue.then");
+    expect(soundEffectsScript).toContain('audio.addEventListener("ended"');
+    expect(soundEffectsScript).toContain("CLICK_SOUND_LIMIT_PER_SECOND = 2");
   });
 
   it("E2E 1 - Achat d'une upgrade avec fonds suffisants", async () => {

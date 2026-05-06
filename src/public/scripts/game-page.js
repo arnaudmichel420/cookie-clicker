@@ -18,6 +18,9 @@
     button: cookieButton,
     frames
   });
+  const gameSoundEffects = window.createGameSoundEffects({
+    Audio: window.Audio
+  });
   let stateRefreshHandle = null;
   let activeFilter = null;
 
@@ -113,6 +116,8 @@
   }
 
   async function clickCookie() {
+    gameSoundEffects.startBackgroundMusic();
+
     const { response, data } = await window.gameClient.clickCookie();
 
     if (handleGameError(response, data, window.GAME_MESSAGES.clickError)) {
@@ -121,6 +126,7 @@
 
     renderStats(data);
     setFeedback("");
+    gameSoundEffects.playClickSound();
 
     if (data.shouldAnimate) {
       trumpCharacter.morph();
@@ -128,6 +134,8 @@
   }
 
   async function purchaseUpgrade(upgradeKey) {
+    gameSoundEffects.startBackgroundMusic();
+
     const { response, data } = await window.gameClient.purchaseUpgrade(upgradeKey);
 
     if (!response.ok) {
@@ -137,6 +145,7 @@
 
     renderStats(data);
     setFeedback(window.GAME_MESSAGES.upgradePurchased, "success");
+    gameSoundEffects.playUpgradeSound();
   }
 
   cookieButton.addEventListener("click", clickCookie);
