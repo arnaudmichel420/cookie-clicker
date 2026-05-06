@@ -225,6 +225,28 @@ describe("authentification utilisateur", () => {
     expect(body.isAuthenticated).toBe(true);
   });
 
+  it("conserve l'acces au jeu apres refresh avec le token persistant", async () => {
+    // Given : un utilisateur est connecte et son token est conserve par le navigateur
+    const email = `page-refresh-${Date.now()}@gmail.com`;
+    await register(email);
+    const loginResponse = await login(email);
+    const { token } = await loginResponse.json();
+
+    // When : il rafraichit la racine sans renvoyer manuellement le header Authorization
+    const refreshResponse = await fetch(BASE_URL, {
+      headers: {
+        Cookie: `auth_token=${encodeURIComponent(token)}`
+      },
+      redirect: "manual"
+    });
+    const html = await refreshResponse.text();
+
+    // Then : il reste authentifie et voit directement le jeu
+    expect(refreshResponse.status).toBe(200);
+    expect(html).toContain("Sovereign Clicker");
+    expect(html).toContain("Trump dollars");
+  });
+
   it("redirige un utilisateur non connecte de la racine vers la connexion", async () => {
     // Given : un utilisateur arrive sur le site sans etre connecte
     // When : il tente d'ouvrir la racine qui correspond au jeu
