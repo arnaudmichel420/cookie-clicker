@@ -1,0 +1,24 @@
+@layer pages {
+  body.page-login .page-shell {
+    display: grid;
+    grid-template-columns: minmax(320px, 520px);
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+  }
+
+  @media (max-width: 720px) {
+    body.page-login h1 {
+      font-size: clamp(2.2rem, 10vw, 3.2rem);
+    }
+
+    body.page-login .form-panel {
+      width: 100%;
+      padding: 22px;
+    }
+
+    body.page-login .page-shell {
+      padding: 20px 16px;
+    }
+  }
+}
