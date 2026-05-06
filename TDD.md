@@ -13,8 +13,6 @@
 - On ne peut pas creer deux comptes avec la meme adresse email.
 - Au refresh de la page, l'utilisateur reste connecte.
 
----
-
 ## Tests E2E
 
 ### E2E 1 - Creation de compte puis connexion
@@ -46,3 +44,49 @@ Then : il est invite a se connecter
 Given : un compte existe deja avec une adresse email donnee  
 When : un utilisateur tente de creer un deuxieme compte avec la meme adresse email  
 Then : le message "Adresse email déjà utilisé" est affiche
+
+
+# TDD - Cookie qui click
+
+## User stories
+
+- L'utilisateur est connecté et clique sur le cookie, le compteur de cookies s'incrémente à chaque clic, le personnage est animé
+- L'utilisateur connecté voit son nombre de cookies et les cookies générés par seconde
+
+## Criteres d'acceptation
+
+- Un clic égale un cookie dans le compteur
+- Le compteur s'incrémente
+- Au rechargement de la page, le compteur est rechargé avec les statistiques stockées en base
+
+## Tests E2E
+
+### E2E 1 - Clic sur le cookie
+
+Given : un utilisateur est connecte et arrive sur la page du jeu avec 0 cookie  
+When : il clique une fois sur le cookie central  
+Then : le compteur affiche 1 cookie
+
+### E2E 2 - Incrementation du compteur a chaque clic
+
+Given : un utilisateur est connecte et arrive sur la page du jeu avec 0 cookie  
+When : il clique plusieurs fois sur le cookie central  
+Then : le compteur s'incremente de 1 cookie a chaque clic
+
+### E2E 3 - Animation du personnage au clic
+
+Given : un utilisateur est connecte et arrive sur la page du jeu  
+When : il clique sur le cookie central  
+Then : le personnage joue son animation de clic
+
+### E2E 4 - Affichage des statistiques du joueur
+
+Given : un utilisateur est connecte et possede des statistiques de progression  
+When : il arrive sur la page du jeu  
+Then : son nombre de cookies et les cookies generes par seconde sont affiches
+
+### E2E 5 - Persistance du compteur au rechargement
+
+Given : un utilisateur connecte a gagne des cookies en cliquant sur le cookie  
+When : il recharge la page du jeu  
+Then : le compteur est recharge avec les statistiques stockees en base
