@@ -1,11 +1,12 @@
 const { AUTH_ERRORS } = require("../constants/auth");
-const { createUserRepository } = require("../repositories/inMemoryUserRepository");
+const { getDbPath } = require("../config/appConfig");
+const { createSqliteUserRepository } = require("../repositories/sqliteUserRepository");
 const { normalizeEmail } = require("../utils/auth");
 const { createPasswordService } = require("./passwordService");
 const { createTokenService } = require("./tokenService");
 
 function createAuthService({
-  userRepository = createUserRepository(),
+  userRepository = createSqliteUserRepository(getDbPath()),
   passwordService = createPasswordService(),
   tokenService = createTokenService()
 } = {}) {
@@ -111,5 +112,5 @@ module.exports = {
   createAuthService,
   createPasswordService,
   createTokenService,
-  createUserRepository
+  createSqliteUserRepository
 };
