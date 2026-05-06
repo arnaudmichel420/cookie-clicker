@@ -124,3 +124,37 @@ Then : l'upgrade n'est pas achetée et un message d'erreur est affiché
 Given : un utilisateur est connecté et a acheté une upgrade  
 When : il recharge la page du jeu  
 Then : l'upgrade achetée reste active et ses effets sont appliqués
+
+
+# TDD - Effets
+
+## User stories
+
+- En tant qu'utilisateur connecté, je souhaite avoir des effets visuels quand je clique sur Trump et quand j'achète des upgrades
+
+## Criteres d'acceptation
+
+- Les effets se lancent quand j'achète une upgrade et sont proportionnels au rang de l'upgrade
+- L'effet se lance quand je clique sur Trump
+- Quand je spamme les clics, les sons effets se cumuls
+
+## Tests E2E
+
+### E2E 1 - Effets visuels lors de l'achat d'une upgrade
+
+Given : un utilisateur est connecté et achète une upgrade  
+When : l'achat est confirmé  
+Then : un effet visuel proportionnel au rang de l'upgrade est déclenché
+
+### E2E 2 - Effet visuel lors du clic sur Trump
+
+Given : un utilisateur est connecté et arrive sur la page du jeu  
+When : il clique sur Trump  
+Then : un effet visuel spécifique est déclenché
+
+### E2E 3 - Cumul des effets sonores lors de spams de clics
+
+Given : un utilisateur est connecté et clique rapidement sur Trump  
+When : il spamme les clics  
+Then : les effets sonores se cumulent sans interruption
+
