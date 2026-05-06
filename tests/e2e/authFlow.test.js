@@ -1,13 +1,22 @@
 const { spawn } = require("node:child_process");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const Database = require("better-sqlite3");
 
 const PORT = 3210;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 
-function startServer() {
+function createTempDbPath() {
+  return path.join(fs.mkdtempSync(path.join(os.tmpdir(), "cookie-clicker-e2e-")), "game.sqlite");
+}
+
+function startServer(dbPath) {
   return new Promise((resolve, reject) => {
     const server = spawn("node", ["src/server.js"], {
       env: {
         ...process.env,
+        DB_PATH: dbPath,
         PORT: String(PORT)
       },
       stdio: ["ignore", "pipe", "pipe"]
@@ -38,15 +47,36 @@ function startServer() {
   });
 }
 
+function stopServer(server) {
+  return new Promise((resolve) => {
+    server.once("exit", resolve);
+    server.kill();
+  });
+}
+
+function findStoredUser(dbPath, email) {
+  const db = new Database(dbPath, {
+    readonly: true
+  });
+  const user = db
+    .prepare("SELECT id, email, password_hash, token FROM users WHERE email = ?")
+    .get(email);
+
+  db.close();
+
+  return user;
+}
+
 describe("authentification utilisateur", () => {
+  const dbPath = createTempDbPath();
   let server;
 
   beforeAll(async () => {
-    server = await startServer();
+    server = await startServer(dbPath);
   });
 
-  afterAll(() => {
-    server.kill();
+  afterAll(async () => {
+    await stopServer(server);
   });
 
   async function register(email, password = "Password123!") {
@@ -85,6 +115,38 @@ describe("authentification utilisateur", () => {
     expect(loginResponse.status).toBe(200);
     expect(body.token).toEqual(expect.any(String));
     expect(body.token.length).toBeGreaterThan(0);
+  });
+
+  it("stocke le compte utilisateur dans la base SQLite", async () => {
+    // Given : un utilisateur cree un compte avec une adresse email unique
+    const email = `stored-${Date.now()}@gmail.com`;
+
+    // When : l'inscription est validee par l'API
+    const registerResponse = await register(email);
+    const storedUser = findStoredUser(dbPath, email);
+
+    // Then : l'utilisateur est bien present dans la table users
+    expect(registerResponse.status).toBe(201);
+    expect(storedUser.email).toBe(email);
+    expect(storedUser.password_hash).toEqual(expect.any(String));
+    expect(storedUser.password_hash).not.toBe("Password123!");
+  });
+
+  it("retrouve un compte stocke en base apres redemarrage du serveur", async () => {
+    // Given : un compte utilisateur a ete enregistre dans SQLite
+    const email = `restart-${Date.now()}@gmail.com`;
+    await register(email);
+
+    // When : le serveur redemarre en conservant le meme fichier de base
+    await stopServer(server);
+    server = await startServer(dbPath);
+    const loginResponse = await login(email);
+    const body = await loginResponse.json();
+
+    // Then : l'utilisateur peut encore se connecter avec son compte persiste
+    expect(loginResponse.status).toBe(200);
+    expect(body.user.email).toBe(email);
+    expect(body.token).toEqual(expect.any(String));
   });
 
   it("deconnecte l'utilisateur et retire son token", async () => {

@@ -33,4 +33,43 @@ describe("sqliteUserRepository", () => {
 
     secondRepository.close();
   });
+
+  it("refuse de stocker deux utilisateurs avec le meme email", async () => {
+    const dbPath = createTempDbPath();
+    const repository = createSqliteUserRepository(dbPath);
+
+    await repository.create({
+      email: "duplicate@gmail.com",
+      passwordHash: "first-password"
+    });
+
+    await expect(
+      repository.create({
+        email: "duplicate@gmail.com",
+        passwordHash: "second-password"
+      })
+    ).rejects.toThrow("UNIQUE constraint failed: users.email");
+
+    repository.close();
+  });
+
+  it("persiste la suppression du token utilisateur", async () => {
+    const dbPath = createTempDbPath();
+    const firstRepository = createSqliteUserRepository(dbPath);
+    const user = await firstRepository.create({
+      email: "logout@gmail.com",
+      passwordHash: "hashed-password"
+    });
+
+    await firstRepository.saveToken(user.id, "token-to-remove");
+    await firstRepository.removeToken(user.id);
+    firstRepository.close();
+
+    const secondRepository = createSqliteUserRepository(dbPath);
+    const persistedUser = await secondRepository.findByEmail("logout@gmail.com");
+
+    expect(persistedUser.token).toBeNull();
+
+    secondRepository.close();
+  });
 });
