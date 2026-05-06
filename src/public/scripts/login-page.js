@@ -30,7 +30,7 @@ loginForm.addEventListener("submit", async (event) => {
 
   window.authClient.setToken(data.token);
   feedback.set(window.AUTH_MESSAGES.loginSuccess, "success");
-  window.redirectTo(window.AUTH_ROUTES.account);
+  window.redirectTo(window.AUTH_ROUTES.game);
 });
 
 initializeLoginPage();

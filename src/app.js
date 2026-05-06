@@ -5,17 +5,24 @@ const { createSqliteUserRepository } = require("./repositories/sqliteUserReposit
 const { createAuthService } = require("./services/authService");
 const { createPasswordService } = require("./services/passwordService");
 const { createTokenService } = require("./services/tokenService");
+const { createSqliteSaveRepository } = require("./repositories/sqliteSaveRepository");
+const { createGameService } = require("./services/gameService");
 const { createAuthRouter } = require("./routes/authRoutes");
+const { createGameRouter } = require("./routes/gameRoutes");
 const { createPageRouter } = require("./routes/pageRoutes");
 
 dotenv.config();
 
 function createApp() {
   const app = express();
+  const dbPath = getDbPath();
   const authService = createAuthService({
-    userRepository: createSqliteUserRepository(getDbPath()),
+    userRepository: createSqliteUserRepository(dbPath),
     passwordService: createPasswordService(),
     tokenService: createTokenService()
+  });
+  const gameService = createGameService({
+    saveRepository: createSqliteSaveRepository(dbPath)
   });
 
   app.set("view engine", "ejs");
@@ -27,6 +34,7 @@ function createApp() {
 
   app.use(createPageRouter());
   app.use(createAuthRouter(authService));
+  app.use(createGameRouter({ authService, gameService }));
 
   return app;
 }

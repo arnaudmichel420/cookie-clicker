@@ -225,15 +225,38 @@ describe("authentification utilisateur", () => {
     expect(body.isAuthenticated).toBe(true);
   });
 
-  it("invite un utilisateur non connecte a se connecter", async () => {
-    // Given : un utilisateur arrive sur le site sans etre connecte
-    // When : la page se charge
-    const response = await fetch(BASE_URL);
-    const html = await response.text();
+  it("conserve l'acces au jeu apres refresh avec le token persistant", async () => {
+    // Given : un utilisateur est connecte et son token est conserve par le navigateur
+    const email = `page-refresh-${Date.now()}@gmail.com`;
+    await register(email);
+    const loginResponse = await login(email);
+    const { token } = await loginResponse.json();
 
-    // Then : il est invite a se connecter
-    expect(response.status).toBe(200);
-    expect(html).toContain("Se connecter");
+    // When : il rafraichit la racine sans renvoyer manuellement le header Authorization
+    const refreshResponse = await fetch(BASE_URL, {
+      headers: {
+        Cookie: `auth_token=${encodeURIComponent(token)}`
+      },
+      redirect: "manual"
+    });
+    const html = await refreshResponse.text();
+
+    // Then : il reste authentifie et voit directement le jeu
+    expect(refreshResponse.status).toBe(200);
+    expect(html).toContain("Sovereign Clicker");
+    expect(html).toContain("Trump dollars");
+  });
+
+  it("redirige un utilisateur non connecte de la racine vers la connexion", async () => {
+    // Given : un utilisateur arrive sur le site sans etre connecte
+    // When : il tente d'ouvrir la racine qui correspond au jeu
+    const response = await fetch(BASE_URL, {
+      redirect: "manual"
+    });
+
+    // Then : il ne voit pas le jeu et part vers la page de connexion
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe("/login");
   });
 
   it("refuse la creation d'un compte avec un email deja utilise", async () => {
