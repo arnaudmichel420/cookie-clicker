@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css"
+    />
+    <link rel="stylesheet" href="/styles/main.css" />
+  </head>
+  <body>
+    <main class="page-shell auth-single">
+      <section class="content-panel">
+        <article class="session-panel">
+          <p class="status-badge">Session active</p>
+          <h2>Bienvenue</h2>
+          <p class="session-text">Votre compte est reconnu et prêt à être utilisé.</p>
+
+          <dl class="session-details">
+            <div>
+              <dt>Adresse email</dt>
+              <dd id="session-email">-</dd>
+            </div>
+            <div>
+              <dt>Etat</dt>
+              <dd id="session-state">Connecte</dd>
+            </div>
+          </dl>
+
+          <button id="logout-button" type="button" class="danger-action">Se déconnecter</button>
+          <p id="feedback" class="feedback" aria-live="polite"></p>
+        </article>
+      </section>
+    </main>
+    <script src="/scripts/auth-client.js"></script>
+    <script src="/scripts/account-page.js"></script>
+  </body>
+</html>

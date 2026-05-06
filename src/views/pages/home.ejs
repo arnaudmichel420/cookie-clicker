@@ -4,15 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%= title %></title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css"
+    />
     <link rel="stylesheet" href="/styles/main.css" />
   </head>
   <body>
-    <main class="hero">
-      <div class="panel">
-        <p class="eyebrow">Express + EJS</p>
+    <main class="page-shell">
+      <section class="hero-panel hero-panel-wide">
+        <p class="eyebrow">Authentification</p>
         <h1><%= title %></h1>
-        <p><%= message %></p>
-      </div>
+        <p class="lead"><%= message %></p>
+
+        <div class="actions-row">
+          <a class="primary-link" href="/login">Se connecter</a>
+          <a class="secondary-link" href="/register">Créer un compte</a>
+        </div>
+      </section>
     </main>
   </body>
 </html>
