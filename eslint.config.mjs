@@ -33,5 +33,14 @@ export default [
         ...globals.vitest
       }
     }
+  },
+  {
+    files: ["src/public/**/*.js"],
+    languageOptions: {
+      sourceType: "script",
+      globals: {
+        ...globals.browser
+      }
+    }
   }
 ];
