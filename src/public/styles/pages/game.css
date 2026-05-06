@@ -22,6 +22,14 @@
     transition: grid-template-columns 220ms ease;
   }
 
+  .effects-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
   .game-shell.is-shop-collapsed {
     grid-template-columns: minmax(0, 1fr) 72px;
   }
@@ -174,9 +182,18 @@
     background: radial-gradient(circle, rgba(255, 255, 255, 0.3), transparent 62%);
   }
 
+  .character-effects {
+    position: absolute;
+    inset: -26% -16% 10%;
+    z-index: 0;
+    pointer-events: none;
+    overflow: visible;
+  }
+
   .character-stage {
     position: absolute;
     inset: -12% -6% 4%;
+    z-index: 1;
   }
 
   .trump-frame {
@@ -197,6 +214,193 @@
   .trump-frame-active {
     opacity: 1;
     transform: scale(var(--trump-scale, 1)) rotate(var(--trump-rotation, 0deg));
+  }
+
+  .effect-dollar {
+    position: absolute;
+    top: -12vh;
+    left: var(--effect-left, 50vw);
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(var(--effect-scale, 1)) rotate(var(--effect-rotation, 0deg));
+    filter: drop-shadow(0 12px 16px rgba(0, 0, 0, 0.24));
+    animation: dollar-fall var(--effect-duration, 1500ms) cubic-bezier(0.22, 0.75, 0.28, 1) forwards;
+  }
+
+  .effect-fighter {
+    position: absolute;
+    top: -18vh;
+    right: -26vw;
+    width: min(30vw, 360px);
+    min-width: 220px;
+    height: auto;
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+    filter:
+      drop-shadow(0 20px 30px rgba(0, 0, 0, 0.26))
+      saturate(1.08);
+    animation: fighter-run 2200ms cubic-bezier(0.16, 0.82, 0.18, 1) forwards;
+  }
+
+  .effect-missile {
+    position: absolute;
+    top: -12vh;
+    right: -18vw;
+    width: min(20vw, 240px);
+    min-width: 140px;
+    height: auto;
+    opacity: 0;
+    transform:
+      translate3d(var(--missile-offset-x, 0px), var(--missile-offset-y, 0px), 0)
+      scale(var(--missile-scale, 1));
+    filter:
+      drop-shadow(0 16px 24px rgba(0, 0, 0, 0.3))
+      saturate(1.1);
+    animation: missile-run 1800ms cubic-bezier(0.16, 0.82, 0.18, 1) forwards;
+  }
+
+  .effect-firework-particle {
+    position: absolute;
+    top: var(--firework-top, 20%);
+    left: var(--firework-left, 50%);
+    width: var(--firework-size, 12px);
+    aspect-ratio: 1;
+    border-radius: 999px;
+    opacity: 0;
+    background:
+      radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 20%, transparent 22%),
+      radial-gradient(
+        circle,
+        hsla(var(--firework-hue, 42), 100%, 72%, 0.95) 0 58%,
+        hsla(var(--firework-hue, 42), 100%, 56%, 0.65) 62%,
+        transparent 72%
+      );
+    box-shadow:
+      0 0 16px hsla(var(--firework-hue, 42), 100%, 62%, 0.72),
+      0 0 30px hsla(var(--firework-hue, 42), 100%, 62%, 0.34);
+    transform: translate3d(-50%, -50%, 0) scale(0.28);
+    animation: firework-burst var(--firework-duration, 1100ms) cubic-bezier(0.18, 0.84, 0.22, 1) forwards;
+  }
+
+  @keyframes dollar-fall {
+    0% {
+      opacity: 0;
+      transform:
+        translate3d(0, 0, 0)
+        scale(var(--effect-scale, 1))
+        rotate(var(--effect-rotation, 0deg));
+    }
+
+    10% {
+      opacity: 1;
+    }
+
+    78% {
+      opacity: 1;
+      transform:
+        translate3d(var(--effect-drift, 0px), 70vh, 0)
+        scale(var(--effect-scale, 1))
+        rotate(calc(var(--effect-rotation, 0deg) + 14deg));
+    }
+
+    100% {
+      opacity: 0;
+      transform:
+        translate3d(calc(var(--effect-drift, 0px) * 1.1), 78vh, 0)
+        scale(calc(var(--effect-scale, 1) * 0.92))
+        rotate(calc(var(--effect-rotation, 0deg) + 18deg));
+    }
+  }
+
+  @keyframes fighter-run {
+    0% {
+      opacity: 0;
+      transform: translate3d(0, 0, 0) scale(0.92);
+    }
+
+    8% {
+      opacity: 1;
+    }
+
+    82% {
+      opacity: 1;
+      transform: translate3d(-112vw, 88vh, 0) scale(1);
+    }
+
+    100% {
+      opacity: 0;
+      transform: translate3d(-122vw, 98vh, 0) scale(1.02);
+    }
+  }
+
+  @keyframes missile-run {
+    0% {
+      opacity: 0;
+      transform:
+        translate3d(var(--missile-offset-x, 0px), var(--missile-offset-y, 0px), 0)
+        scale(calc(var(--missile-scale, 1) * 0.92));
+    }
+
+    10% {
+      opacity: 1;
+    }
+
+    85% {
+      opacity: 1;
+      transform:
+        translate3d(
+          calc(var(--missile-offset-x, 0px) - 114vw),
+          calc(var(--missile-offset-y, 0px) + 92vh),
+          0
+        )
+        scale(var(--missile-scale, 1));
+    }
+
+    100% {
+      opacity: 0;
+      transform:
+        translate3d(
+          calc(var(--missile-offset-x, 0px) - 124vw),
+          calc(var(--missile-offset-y, 0px) + 102vh),
+          0
+        )
+        scale(calc(var(--missile-scale, 1) * 1.04));
+    }
+  }
+
+  @keyframes firework-burst {
+    0% {
+      opacity: 0;
+      transform: translate3d(-50%, -50%, 0) scale(0.28);
+    }
+
+    12% {
+      opacity: 1;
+    }
+
+    78% {
+      opacity: 1;
+      transform:
+        translate3d(
+          calc(-50% + var(--firework-x, 0px)),
+          calc(-50% + var(--firework-y, 0px)),
+          0
+        )
+        scale(1);
+    }
+
+    100% {
+      opacity: 0;
+      transform:
+        translate3d(
+          calc(-50% + var(--firework-x, 0px) * 1.1),
+          calc(-50% + var(--firework-y, 0px) * 1.16),
+          0
+        )
+        scale(0.92);
+    }
   }
 
   .page-game .feedback {

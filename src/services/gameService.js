@@ -145,6 +145,33 @@ function buildPersistedState(stats) {
   };
 }
 
+function buildClickEffect(stats) {
+  return {
+    kind: "trump-click",
+    visual: true,
+    sound: {
+      key: "trump-click",
+      stackable: true
+    },
+    intensity: stats.cookiesPerClick
+  };
+}
+
+function buildPurchaseEffect(upgrade, nextOwnedCount) {
+  return {
+    kind: "upgrade-purchase",
+    visual: true,
+    sound: {
+      key: "upgrade-purchase",
+      stackable: false
+    },
+    intensity: upgrade.effectValue * nextOwnedCount,
+    upgradeKey: upgrade.key,
+    basePrice: upgrade.basePrice,
+    ownedCount: nextOwnedCount
+  };
+}
+
 function createGameService({ saveRepository, rateLimiter = createRateLimiter() } = {}) {
   if (!saveRepository) {
     throw new Error("Save repository requis");
@@ -200,7 +227,7 @@ function createGameService({ saveRepository, rateLimiter = createRateLimiter() }
       assertAuthenticated(userId);
 
       if (!rateLimiter.canClick(userId)) {
-        throw new Error("Limite de 10 clics par seconde dépassée");
+        throw new Error("Limite de 20 clics par seconde dépassée");
       }
 
       const stats = await loadCurrentStats(userId);
@@ -213,6 +240,7 @@ function createGameService({ saveRepository, rateLimiter = createRateLimiter() }
 
       return {
         ...savedStats,
+        clickEffect: buildClickEffect(savedStats),
         shouldAnimate: true
       };
     },
@@ -244,7 +272,12 @@ function createGameService({ saveRepository, rateLimiter = createRateLimiter() }
         lastCollectedAt: new Date().toISOString()
       });
 
-      return persistStats(userId, nextStats);
+      const savedStats = await persistStats(userId, nextStats);
+
+      return {
+        ...savedStats,
+        purchaseEffect: buildPurchaseEffect(upgrade, nextUpgradeLevels[upgradeKey])
+      };
     }
   };
 }

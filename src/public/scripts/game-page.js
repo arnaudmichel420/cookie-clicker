@@ -5,6 +5,8 @@
   const cookiesPerClick = document.getElementById("cookies-per-click");
   const upgradeCount = document.getElementById("upgrade-count");
   const feedback = document.getElementById("game-feedback");
+  const effectsLayer = document.getElementById("effects-layer");
+  const characterEffects = document.getElementById("character-effects");
   const gameShell = document.querySelector(".game-shell");
   const shopClose = document.getElementById("shop-close");
   const shopToggle = document.getElementById("shop-toggle");
@@ -17,6 +19,10 @@
   const trumpCharacter = window.createTrumpCharacter({
     button: cookieButton,
     frames
+  });
+  const gameEffects = window.createGameEffects({
+    layer: effectsLayer,
+    characterLayer: characterEffects
   });
   let stateRefreshHandle = null;
   let activeFilter = null;
@@ -124,6 +130,7 @@
 
     if (data.shouldAnimate) {
       trumpCharacter.morph();
+      gameEffects.triggerClickEffects();
     }
   }
 
@@ -137,6 +144,7 @@
 
     renderStats(data);
     setFeedback(window.GAME_MESSAGES.upgradePurchased, "success");
+    gameEffects.triggerPurchaseEffects(data.purchaseEffect);
   }
 
   cookieButton.addEventListener("click", clickCookie);
