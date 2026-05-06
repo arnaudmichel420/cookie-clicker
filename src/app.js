@@ -1,7 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
-const { getPublicPath, getViewsPath } = require("./config/appConfig");
-const { createUserRepository } = require("./repositories/inMemoryUserRepository");
+const { getDbPath, getPublicPath, getViewsPath } = require("./config/appConfig");
+const { createSqliteUserRepository } = require("./repositories/sqliteUserRepository");
 const { createAuthService } = require("./services/authService");
 const { createPasswordService } = require("./services/passwordService");
 const { createTokenService } = require("./services/tokenService");
@@ -13,7 +13,7 @@ dotenv.config();
 function createApp() {
   const app = express();
   const authService = createAuthService({
-    userRepository: createUserRepository(),
+    userRepository: createSqliteUserRepository(getDbPath()),
     passwordService: createPasswordService(),
     tokenService: createTokenService()
   });
