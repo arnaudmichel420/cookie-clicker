@@ -12,7 +12,8 @@
     <link rel="stylesheet" href="/styles/pages/game.css" />
   </head>
   <body class="page-game">
-    <main class="game-shell" data-authenticated="<%= isAuthenticated %>">
+    <div class="effects-layer" id="effects-layer" aria-hidden="true"></div>
+    <main class="game-shell is-shop-collapsed" data-authenticated="<%= isAuthenticated %>">
       <section class="game-board" aria-labelledby="game-title">
         <p class="game-brand">Sovereign Clicker</p>
 
@@ -28,6 +29,7 @@
           aria-label="Gagner un trump dollar"
         >
           <span class="cookie-halo" aria-hidden="true"></span>
+          <span class="character-effects" id="character-effects" aria-hidden="true"></span>
           <span class="character-stage" aria-hidden="true">
             <img
               class="trump-frame trump-frame-active"
@@ -54,11 +56,11 @@
             </div>
             <div class="stat-card stat-card-gold">
               <dt>Trump dollars par click</dt>
-              <dd><span id="cookies-per-click">1</span></dd>
+              <dd><span id="cookies-per-click"><%= cookiesPerClick %></span></dd>
             </div>
             <div class="stat-card stat-card-red">
               <dt>Nombre d'upgrades</dt>
-              <dd><span id="upgrade-count">0</span></dd>
+              <dd><span id="upgrade-count"><%= upgradeCount %></span></dd>
             </div>
           </dl>
           <p class="feedback" id="game-feedback" role="status"></p>
@@ -66,12 +68,90 @@
       </section>
 
       <aside class="shop-panel" aria-label="Améliorations">
-        <button class="shop-toggle" id="shop-toggle" type="button" aria-label="Rétracter la boutique">
-          <i class="ph ph-storefront" aria-hidden="true"></i>
+        <button
+          class="shop-edge-chevron"
+          id="shop-close"
+          type="button"
+          aria-label="Fermer la boutique"
+        >
+          <i class="ph ph-caret-right" aria-hidden="true"></i>
         </button>
+        <div class="shop-actions">
+          <button class="shop-toggle" id="shop-toggle" type="button" aria-label="Rétracter la boutique">
+            <i class="ph ph-storefront" aria-hidden="true"></i>
+          </button>
+          <div class="shop-toolbar" aria-label="Filtres boutique">
+            <button
+              class="shop-filter"
+              id="shop-filter-auto"
+              type="button"
+              data-upgrade-filter="auto-click"
+              aria-label="Afficher les améliorations automatiques"
+            >
+              <i class="ph ph-timer" aria-hidden="true"></i>
+            </button>
+            <button
+              class="shop-filter"
+              id="shop-filter-click"
+              type="button"
+              data-upgrade-filter="boost-click"
+              aria-label="Afficher les boosts de clic"
+            >
+              <i class="ph ph-hand-tap" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
         <div class="shop-head">
           <p class="eyebrow">Upgrades</p>
           <h2>Améliorations</h2>
+        </div>
+        <div class="shop-list" id="shop-list">
+          <% upgrades.forEach((upgrade) => { %>
+            <article
+              class="upgrade-card"
+              data-upgrade-key="<%= upgrade.key %>"
+              data-upgrade-filter-kind="<%= upgrade.kind === 'auto' ? 'auto-click' : 'boost-click' %>"
+            >
+              <img
+                class="upgrade-art"
+                src="<%= upgrade.image %>"
+                alt=""
+                width="72"
+                height="72"
+                draggable="false"
+              />
+              <div class="upgrade-copy">
+                <div class="upgrade-heading">
+                  <h3><%= upgrade.name %></h3>
+                  <p class="upgrade-kind">
+                    <%= upgrade.kind === "auto" ? "Auto-click" : "Boost de clic" %>
+                  </p>
+                </div>
+                <p class="upgrade-description"><%= upgrade.description %></p>
+                <dl class="upgrade-meta">
+                  <div>
+                    <dt>Effet</dt>
+                    <dd>
+                      <%= upgrade.kind === "auto" ? `+${upgrade.effectValue}/s` : `+${upgrade.effectValue} par clic` %>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Niveau</dt>
+                    <dd data-upgrade-owned><%= upgrade.owned %></dd>
+                  </div>
+                </dl>
+              </div>
+              <button
+                class="upgrade-buy"
+                type="button"
+                data-upgrade-buy
+                data-upgrade-price="<%= upgrade.currentPrice %>"
+              >
+                Acheter -
+                <span data-upgrade-price-label>$<%= upgrade.currentPrice %></span>
+              </button>
+            </article>
+          <% }) %>
         </div>
       </aside>
     </main>
@@ -79,7 +159,9 @@
     <script src="/scripts/constants.js"></script>
     <script src="/scripts/auth-client.js"></script>
     <script src="/scripts/game-client.js"></script>
+    <script src="/scripts/game-effects.js"></script>
     <script src="/scripts/trump-character.js"></script>
+    <script src="/scripts/sound-effects.js"></script>
     <script src="/scripts/game-page.js"></script>
   </body>
 </html>

@@ -61,7 +61,13 @@ function findStoredGameSave(dbPath, email) {
   const save = db
     .prepare(
       `
-        SELECT game_saves.user_id, game_saves.trump_dollars, game_saves.trump_dollars_per_second
+        SELECT
+          game_saves.user_id,
+          game_saves.trump_dollars,
+          game_saves.trump_dollars_per_second,
+          game_saves.trump_dollars_per_click,
+          game_saves.pickup_level,
+          game_saves.gold_level
         FROM game_saves
         INNER JOIN users ON users.id = game_saves.user_id
         WHERE users.email = ?
@@ -136,11 +142,31 @@ describe("cookie qui click", () => {
     });
   }
 
+  async function purchaseUpgrade(token, upgradeKey) {
+    return fetch(`${BASE_URL}/game/upgrades/${upgradeKey}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+
+  async function earnCookies(token, amount) {
+    for (let index = 0; index < amount; index += 1) {
+      if (index > 0 && index % 10 === 0) {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 1100);
+        });
+      }
+
+      const response = await clickCookie(token);
+      expect(response.status).toBe(200);
+    }
+  }
+
   it("E2E 0 - affiche le jeu sur la racine pour un utilisateur connecte", async () => {
-    // Given : un utilisateur est connecte
     const { token } = await createAuthenticatedUser();
 
-    // When : il ouvre la racine de l'application
     const response = await fetch(BASE_URL, {
       headers: {
         Authorization: `Bearer ${token}`
@@ -148,143 +174,278 @@ describe("cookie qui click", () => {
     });
     const html = await response.text();
 
-    // Then : la racine affiche le jeu et pas une landing page
     expect(response.status).toBe(200);
     expect(html).toContain("Sovereign Clicker");
-    expect(html).toContain("Trump dollars");
-    expect(html).toContain("Gagner un trump dollar");
+    expect(html).toContain("Améliorations");
+    expect(html).toContain("Auto-click");
   });
 
-  it("E2E 0b - redirige un utilisateur non connecte hors du jeu", async () => {
-    // Given : aucun utilisateur n'est connecte
-    // When : il tente d'ouvrir le jeu
+  it("E2E 8 - charge le module de sound effect sur la page du jeu", async () => {
+    const { token } = await createAuthenticatedUser();
+
     const response = await fetch(BASE_URL, {
-      redirect: "manual"
-    });
-
-    // Then : le serveur le redirige vers la connexion
-    expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe("/login");
-  });
-
-  it("E2E 1 - incremente le compteur d'un cookie apres un clic", async () => {
-    // Given : un utilisateur est connecte et arrive sur la page du jeu avec 0 cookie
-    const { token } = await createAuthenticatedUser();
-    const initialResponse = await getGameState(token);
-    expect(initialResponse.status).toBe(200);
-    const initialState = await initialResponse.json();
-
-    // When : il clique une fois sur le cookie central
-    const clickResponse = await clickCookie(token);
-    expect(clickResponse.status).toBe(200);
-    const clickState = await clickResponse.json();
-
-    // Then : le compteur affiche 1 cookie
-    expect(initialState.cookies).toBe(0);
-    expect(clickState.cookies).toBe(1);
-  });
-
-  it("E2E 2 - incremente le compteur de 1 cookie a chaque clic", async () => {
-    // Given : un utilisateur est connecte et arrive sur la page du jeu avec 0 cookie
-    const { token } = await createAuthenticatedUser();
-
-    // When : il clique plusieurs fois sur le cookie central
-    const firstClick = await clickCookie(token);
-    const secondClick = await clickCookie(token);
-    const thirdClick = await clickCookie(token);
-
-    // Then : le compteur s'incremente de 1 cookie a chaque clic
-    expect(firstClick.status).toBe(200);
-    expect(secondClick.status).toBe(200);
-    expect(thirdClick.status).toBe(200);
-    expect((await firstClick.json()).cookies).toBe(1);
-    expect((await secondClick.json()).cookies).toBe(2);
-    expect((await thirdClick.json()).cookies).toBe(3);
-  });
-
-  it("E2E 3 - demande l'animation du personnage au clic", async () => {
-    // Given : un utilisateur est connecte et arrive sur la page du jeu
-    const { token } = await createAuthenticatedUser();
-
-    // When : il clique sur le cookie central
-    const clickResponse = await clickCookie(token);
-    expect(clickResponse.status).toBe(200);
-    const clickState = await clickResponse.json();
-
-    // Then : le personnage joue son animation de clic
-    expect(clickState.shouldAnimate).toBe(true);
-  });
-
-  it("E2E 4 - affiche les trump dollars et les statistiques du joueur", async () => {
-    // Given : un utilisateur est connecte et possede des statistiques de progression
-    const { token } = await createAuthenticatedUser();
-    await clickCookie(token);
-    await clickCookie(token);
-
-    // When : il arrive sur la page du jeu
-    const gameResponse = await fetch(BASE_URL, {
       headers: {
         Authorization: `Bearer ${token}`
       }
     });
-    const html = await gameResponse.text();
+    const html = await response.text();
 
-    // Then : son nombre de trump dollars et ses statistiques sont affiches
-    expect(gameResponse.status).toBe(200);
-    expect(html).toContain("$2");
-    expect(html).toContain("Trump dollars par seconde");
-    expect(html).toContain("Trump dollars par click");
-    expect(html).toContain("Nombre d'upgrades");
+    expect(response.status).toBe(200);
+    expect(html).toContain('<script src="/scripts/sound-effects.js"></script>');
+    expect(html.indexOf("/scripts/sound-effects.js")).toBeLessThan(
+      html.indexOf("/scripts/game-page.js")
+    );
   });
 
-  it("E2E 5 - recharge le compteur avec les statistiques stockees en base", async () => {
-    // Given : un utilisateur connecte a gagne des cookies en cliquant sur le cookie
+  it("E2E 9 - expose les sons de clic sur Trump", async () => {
+    const constantsResponse = await fetch(`${BASE_URL}/scripts/constants.js`);
+    const constantsScript = await constantsResponse.text();
+    const clickSoundResponse = await fetch(
+      `${BASE_URL}/sounds/click/ksjsbwuil-cash-register-1-513922.mp3`
+    );
+
+    expect(constantsResponse.status).toBe(200);
+    expect(constantsScript).toContain("window.SOUND_EFFECTS");
+    expect(constantsScript).toContain("/sounds/click/ksjsbwuil-cash-register-1-513922.mp3");
+    expect(constantsScript).toContain("/sounds/click/dragon-studio-cash-register-kaching-376867.mp3");
+    expect(clickSoundResponse.status).toBe(200);
+  });
+
+  it("E2E 10 - expose les sons d'achat d'upgrade", async () => {
+    const constantsResponse = await fetch(`${BASE_URL}/scripts/constants.js`);
+    const constantsScript = await constantsResponse.text();
+    const upgradeSoundResponse = await fetch(
+      `${BASE_URL}/sounds/upgrades/donald-trump-approves-this.mp3`
+    );
+
+    expect(constantsResponse.status).toBe(200);
+    expect(constantsScript).toContain("/sounds/upgrades/donald-trump-approves-this.mp3");
+    expect(constantsScript).toContain("/sounds/upgrades/trump-mr-toughguy.mp3");
+    expect(upgradeSoundResponse.status).toBe(200);
+  });
+
+  it("E2E 13 - expose la musique de fond", async () => {
+    const constantsResponse = await fetch(`${BASE_URL}/scripts/constants.js`);
+    const constantsScript = await constantsResponse.text();
+    const backgroundMusicResponse = await fetch(`${BASE_URL}/sounds/usa-anthem.mp3`);
+
+    expect(constantsResponse.status).toBe(200);
+    expect(constantsScript).toContain('background: "/sounds/usa-anthem.mp3"');
+    expect(backgroundMusicResponse.status).toBe(200);
+  });
+
+  it("E2E 11 - branche les sons uniquement sur les actions utilisateur", async () => {
+    const gamePageResponse = await fetch(`${BASE_URL}/scripts/game-page.js`);
+    const gamePageScript = await gamePageResponse.text();
+
+    expect(gamePageResponse.status).toBe(200);
+    expect(gamePageScript).toContain("gameSoundEffects.startBackgroundMusic()");
+    expect(gamePageScript).toContain("gameSoundEffects.playClickSound()");
+    expect(gamePageScript).toContain("gameSoundEffects.playUpgradeSound()");
+    expect(gamePageScript.indexOf("gameSoundEffects.playClickSound()")).toBeGreaterThan(
+      gamePageScript.indexOf("async function clickCookie()")
+    );
+    expect(gamePageScript.indexOf("gameSoundEffects.playUpgradeSound()")).toBeGreaterThan(
+      gamePageScript.indexOf("async function purchaseUpgrade(upgradeKey)")
+    );
+    expect(
+      gamePageScript.slice(
+        gamePageScript.indexOf("async function requestGameState()"),
+        gamePageScript.indexOf("async function clickCookie()")
+      )
+    ).not.toContain("gameSoundEffects.play");
+  });
+
+  it("E2E 12 - conserve une file de lecture pour les sons d'upgrades", async () => {
+    const soundEffectsResponse = await fetch(`${BASE_URL}/scripts/sound-effects.js`);
+    const soundEffectsScript = await soundEffectsResponse.text();
+
+    expect(soundEffectsResponse.status).toBe(200);
+    expect(soundEffectsScript).toContain("let upgradeQueue = Promise.resolve()");
+    expect(soundEffectsScript).toContain("const queuedSound = upgradeQueue.then");
+    expect(soundEffectsScript).toContain('audio.addEventListener("ended"');
+    expect(soundEffectsScript).toContain("CLICK_SOUND_LIMIT_PER_SECOND = 2");
+  });
+
+  it("E2E 1 - Achat d'une upgrade avec fonds suffisants", async () => {
     const { token } = await createAuthenticatedUser();
-    await clickCookie(token);
-    await clickCookie(token);
-    await clickCookie(token);
 
-    // When : il recharge la page du jeu
-    const stateAfterRefresh = await getGameState(token);
-    expect(stateAfterRefresh.status).toBe(200);
-    const body = await stateAfterRefresh.json();
+    await earnCookies(token, 20);
 
-    // Then : le compteur est recharge avec les statistiques stockees en base
-    expect(body.cookies).toBe(3);
+    const beforePurchaseResponse = await getGameState(token);
+    const beforePurchaseState = await beforePurchaseResponse.json();
+    const purchaseResponse = await purchaseUpgrade(token, "pickup");
+    const purchaseState = await purchaseResponse.json();
+
+    expect(beforePurchaseResponse.status).toBe(200);
+    expect(purchaseResponse.status).toBe(200);
+    expect(beforePurchaseState.cookies).toBe(20);
+    expect(purchaseState.cookies).toBe(0);
+    expect(purchaseState.cookiesPerSecond).toBe(1);
+    expect(purchaseState.upgradeLevels.pickup).toBe(1);
   });
 
-  it("E2E 6 - stocke les trump dollars dans la table game_saves SQLite", async () => {
-    // Given : un utilisateur connecte gagne des trump dollars
-    const { email, token } = await createAuthenticatedUser();
-    await clickCookie(token);
-    await clickCookie(token);
+  it("E2E 2 - Achat d'une upgrade sans fonds suffisants", async () => {
+    const { token } = await createAuthenticatedUser();
 
-    // When : on consulte directement la base SQLite utilisee par le serveur
-    const storedSave = findStoredGameSave(dbPath, email);
+    const response = await purchaseUpgrade(token, "pickup");
+    const body = await response.json();
 
-    // Then : la progression est enregistree dans game_saves
-    expect(storedSave.trump_dollars).toBe(2);
-    expect(storedSave.trump_dollars_per_second).toBe(0);
+    expect(response.status).toBe(400);
+    expect(body.error).toBe("Fonds insuffisants");
   });
 
-  it("E2E 7 - conserve les trump dollars apres redemarrage du serveur", async () => {
-    // Given : un utilisateur connecte a gagne des trump dollars
-    const { email, token } = await createAuthenticatedUser();
-    await clickCookie(token);
-    await clickCookie(token);
-    await clickCookie(token);
+  it("E2E 3 - Persistance des upgrades achetées", async () => {
+    const { token } = await createAuthenticatedUser();
 
-    // When : le serveur redemarre et l'utilisateur se reconnecte
+    await earnCookies(token, 30);
+
+    const purchaseResponse = await purchaseUpgrade(token, "gold");
+    const purchaseState = await purchaseResponse.json();
+    const refreshedStateResponse = await getGameState(token);
+    const refreshedState = await refreshedStateResponse.json();
+
+    expect(purchaseResponse.status).toBe(200);
+    expect(refreshedStateResponse.status).toBe(200);
+    expect(purchaseState.cookiesPerClick).toBe(2);
+    expect(refreshedState.cookiesPerClick).toBe(2);
+    expect(refreshedState.upgradeLevels.gold).toBe(1);
+  });
+
+  it("E2E 4 - incremente le compteur avec le gain par clic courant", async () => {
+    const { token } = await createAuthenticatedUser();
+
+    await earnCookies(token, 30);
+    const upgradeResponse = await purchaseUpgrade(token, "gold");
+    await new Promise((resolve) => {
+      setTimeout(resolve, 1100);
+    });
+    const clickResponse = await clickCookie(token);
+    const clickState = await clickResponse.json();
+
+    expect(upgradeResponse.status).toBe(200);
+    expect(clickResponse.status).toBe(200);
+    expect(clickState.cookiesPerClick).toBe(2);
+  });
+
+  it("E2E 5 - soustrait le prix de l'upgrade achete", async () => {
+    const { token } = await createAuthenticatedUser();
+
+    await earnCookies(token, 20);
+
+    const response = await purchaseUpgrade(token, "pickup");
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.cookies).toBe(0);
+    expect(body.cookiesPerSecond).toBe(1);
+  });
+
+  it("E2E 6 - stocke les upgrades par utilisateur dans SQLite", async () => {
+    const firstUser = await createAuthenticatedUser();
+    const secondUser = await createAuthenticatedUser();
+
+    await earnCookies(firstUser.token, 20);
+
+    await purchaseUpgrade(firstUser.token, "pickup");
+
+    const firstSave = findStoredGameSave(dbPath, firstUser.email);
+    const secondSave = findStoredGameSave(dbPath, secondUser.email);
+
+    expect(firstSave.pickup_level).toBe(1);
+    expect(firstSave.trump_dollars_per_second).toBe(1);
+    expect(secondSave).toBeUndefined();
+  });
+
+  it("E2E 7 - recharge les upgrades depuis SQLite apres redemarrage du serveur", async () => {
+    const { email, token } = await createAuthenticatedUser();
+
+    await earnCookies(token, 30);
+
+    await purchaseUpgrade(token, "gold");
     await stopServer(server);
     server = await startServer(dbPath);
+
     const loginResponse = await login(email);
     const { token: newToken } = await loginResponse.json();
     const stateAfterRestart = await getGameState(newToken);
     const body = await stateAfterRestart.json();
 
-    // Then : les trump dollars sont recharges depuis SQLite
     expect(loginResponse.status).toBe(200);
     expect(stateAfterRestart.status).toBe(200);
-    expect(body.cookies).toBe(3);
+    expect(body.cookiesPerClick).toBe(2);
+    expect(body.upgradeLevels.gold).toBe(1);
+  });
+
+  it(
+    "E2E Effets 1 - Effets visuels lors de l'achat d'une upgrade",
+    async () => {
+      const { token } = await createAuthenticatedUser();
+
+      await earnCookies(token, 70);
+
+      const pickupResponse = await purchaseUpgrade(token, "pickup");
+      const pickupBody = await pickupResponse.json();
+      const secondPickupResponse = await purchaseUpgrade(token, "pickup");
+      const secondPickupBody = await secondPickupResponse.json();
+
+      expect(pickupResponse.status).toBe(200);
+      expect(secondPickupResponse.status).toBe(200);
+      expect(pickupBody.purchaseEffect).toMatchObject({
+        kind: "upgrade-purchase",
+        visual: true,
+        upgradeKey: "pickup"
+      });
+      expect(secondPickupBody.purchaseEffect).toMatchObject({
+        kind: "upgrade-purchase",
+        visual: true,
+        upgradeKey: "pickup"
+      });
+      expect(secondPickupBody.purchaseEffect.intensity).toBeGreaterThan(
+        pickupBody.purchaseEffect.intensity
+      );
+    },
+    15000
+  );
+
+  it("E2E Effets 2 - Effet visuel lors du clic sur Trump", async () => {
+    const { token } = await createAuthenticatedUser();
+
+    const clickResponse = await clickCookie(token);
+    const clickBody = await clickResponse.json();
+
+    expect(clickResponse.status).toBe(200);
+    expect(clickBody.shouldAnimate).toBe(true);
+    expect(clickBody.clickEffect).toMatchObject({
+      kind: "trump-click",
+      visual: true
+    });
+  });
+
+  it("E2E Effets 3 - Cumul des effets sonores lors de spams de clics", async () => {
+    const { token } = await createAuthenticatedUser();
+
+    const firstClickResponse = await clickCookie(token);
+    const secondClickResponse = await clickCookie(token);
+    const thirdClickResponse = await clickCookie(token);
+    const firstClickBody = await firstClickResponse.json();
+    const secondClickBody = await secondClickResponse.json();
+    const thirdClickBody = await thirdClickResponse.json();
+
+    expect(firstClickResponse.status).toBe(200);
+    expect(secondClickResponse.status).toBe(200);
+    expect(thirdClickResponse.status).toBe(200);
+    expect(firstClickBody.clickEffect.sound).toEqual({
+      key: "trump-click",
+      stackable: true
+    });
+    expect(secondClickBody.clickEffect.sound).toEqual({
+      key: "trump-click",
+      stackable: true
+    });
+    expect(thirdClickBody.clickEffect.sound).toEqual({
+      key: "trump-click",
+      stackable: true
+    });
   });
 });

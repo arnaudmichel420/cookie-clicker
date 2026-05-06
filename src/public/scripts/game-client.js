@@ -44,8 +44,15 @@
     });
   }
 
+  function purchaseUpgrade(upgradeKey) {
+    return requestWithToken(`${windowObject.GAME_ROUTES.upgrade}/${upgradeKey}`, {
+      method: "POST"
+    });
+  }
+
   windowObject.gameClient = {
     clickCookie,
-    getState
+    getState,
+    purchaseUpgrade
   };
 })(window);

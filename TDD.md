@@ -90,3 +90,116 @@ Then : son nombre de cookies et les cookies generes par seconde sont affiches
 Given : un utilisateur connecte a gagne des cookies en cliquant sur le cookie  
 When : il recharge la page du jeu  
 Then : le compteur est recharge avec les statistiques stockees en base
+
+
+# TDD - Upgrades
+
+## User stories
+
+- L'utilisateur est connecté et clique sur le cookie, avec l'argent récolté il peut acheter des upgrades
+- L'utilisateur voit le compteur du clicker être modifié en fonction de l'upgrade qu'il a acheté.
+
+## Criteres d'acceptation
+
+- Un upgrade peut être acheté uniquement si les fonds nécessaires sont fournis
+- Si un upgrade est acheté, alors le prix d'achat est soustrait
+- Au rechargement de la page, l'upgrade acheté reste actif
+
+## Tests E2E
+
+### E2E 1 - Achat d'une upgrade avec fonds suffisants
+
+Given : un utilisateur est connecté et possède suffisamment de cookies pour acheter une upgrade  
+When : il clique sur l'upgrade disponible  
+Then : l'upgrade est achetée, le prix est soustrait du compteur, et l'effet de l'upgrade est appliqué
+
+### E2E 2 - Achat d'une upgrade sans fonds suffisants
+
+Given : un utilisateur est connecté et ne possède pas assez de cookies pour acheter une upgrade  
+When : il tente de cliquer sur l'upgrade  
+Then : l'upgrade n'est pas achetée et un message d'erreur est affiché
+
+### E2E 3 - Persistance des upgrades achetées
+
+Given : un utilisateur est connecté et a acheté une upgrade  
+When : il recharge la page du jeu  
+Then : l'upgrade achetée reste active et ses effets sont appliqués
+
+
+# TDD - Effets
+
+## User stories
+
+- En tant qu'utilisateur connecté, je souhaite avoir des effets visuels quand je clique sur Trump et quand j'achète des upgrades
+
+## Criteres d'acceptation
+
+- Les effets se lancent quand j'achète une upgrade et sont proportionnels au rang de l'upgrade
+- L'effet se lance quand je clique sur Trump
+- Quand je spamme les clics, les sons effets se cumuls
+
+## Tests E2E
+
+### E2E 1 - Effets visuels lors de l'achat d'une upgrade
+
+Given : un utilisateur est connecté et achète une upgrade  
+When : l'achat est confirmé  
+Then : un effet visuel proportionnel au rang de l'upgrade est déclenché
+
+### E2E 2 - Effet visuel lors du clic sur Trump
+
+Given : un utilisateur est connecté et arrive sur la page du jeu  
+When : il clique sur Trump  
+Then : un effet visuel spécifique est déclenché
+
+### E2E 3 - Cumul des effets sonores lors de spams de clics
+
+Given : un utilisateur est connecté et clique rapidement sur Trump  
+When : il spamme les clics  
+Then : les effets sonores se cumulent sans interruption
+
+# TDD - Sound effect
+
+## User stories
+
+- En tant qu'utilisateur connecté, je souhaite avoir du sound effect quand je clique sur Trump et quand j'achète des upgrades
+
+## Criteres d'acceptation
+
+- Le son se lance quand j'achète une upgrade
+- Quand j'achète deux upgrades, les sons sont joués l'un après l'autre
+- Le son se lance quand je clique sur Trump
+- Quand je spamme les clics, au maximum 2 sons de clic sont joues par seconde
+- L'autocliqueur ne lance pas de sons
+
+## Tests E2E
+
+### E2E 1 - Son au clic sur Trump
+
+Given : un utilisateur est connecte et arrive sur la page du jeu  
+When : il clique sur Trump  
+Then : un son de clic est lance
+
+### E2E 2 - Limitation des sons au spam de clics
+
+Given : un utilisateur est connecte et arrive sur la page du jeu  
+When : il clique plusieurs fois rapidement sur Trump  
+Then : au maximum 2 sons de clic sont joues pendant la meme seconde
+
+### E2E 3 - Son a l'achat d'une upgrade
+
+Given : un utilisateur est connecte et possede suffisamment de cookies pour acheter une upgrade  
+When : il achete une upgrade  
+Then : un son d'achat d'upgrade est lance
+
+### E2E 4 - Sons d'upgrades joues l'un apres l'autre
+
+Given : un utilisateur est connecte et possede suffisamment de cookies pour acheter deux upgrades  
+When : il achete deux upgrades rapidement  
+Then : les sons d'achat d'upgrade sont joues l'un apres l'autre
+
+### E2E 5 - Aucun son lance par l'autocliqueur
+
+Given : un utilisateur est connecte et possede une upgrade qui genere automatiquement des cookies  
+When : l'autocliqueur ajoute des cookies au compteur  
+Then : aucun son de clic ni d'upgrade n'est lance automatiquement

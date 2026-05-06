@@ -22,11 +22,34 @@ window.AUTH_MESSAGES = {
 
 window.GAME_ROUTES = {
   click: "/game/click",
-  state: "/game/state"
+  state: "/game/state",
+  upgrade: "/game/upgrades"
 };
 
 window.GAME_MESSAGES = {
   clickError: "Clic refusé.",
   missingSession: "Connectez-vous pour jouer.",
-  sessionExpired: "Session expirée."
+  purchaseError: "Achat refusé.",
+  sessionExpired: "Session expirée.",
+  upgradePurchased: "Upgrade acheté."
+};
+
+window.SOUND_EFFECTS = {
+  background: "/sounds/usa-anthem.mp3",
+  click: [
+    "/sounds/click/ksjsbwuil-cash-register-1-513922.mp3",
+    "/sounds/click/dragon-studio-cash-register-kaching-376867.mp3"
+  ],
+  upgrade: [
+    "/sounds/upgrades/donald-trump-approves-this.mp3",
+    "/sounds/upgrades/donald-trump-bing-bong-sound-effect_lTRFmBB.mp3",
+    "/sounds/upgrades/donald-trump-fake-news-sound-effect.mp3",
+    "/sounds/upgrades/i-am-the-chosen-one.mp3",
+    "/sounds/upgrades/i_will_build_a_great_great_wall_on_our_southern_bo.mp3",
+    "/sounds/upgrades/in-springfield-theyre-eating-the-dogs.mp3",
+    "/sounds/upgrades/thank-you-very-much-trump.mp3",
+    "/sounds/upgrades/trump-dont-be-rude.mp3",
+    "/sounds/upgrades/trump-hates-mosquitoes-audiotrimmer.mp3",
+    "/sounds/upgrades/trump-mr-toughguy.mp3"
+  ]
 };

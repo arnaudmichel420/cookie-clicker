@@ -63,6 +63,24 @@ function createGameController({ authService, gameService }) {
           error: error.message
         });
       }
+    },
+
+    async purchaseUpgrade(req, res) {
+      const user = await resolveUser(req, res);
+
+      if (!user) {
+        return;
+      }
+
+      try {
+        const stats = await gameService.purchaseUpgrade(user.id, req.params.upgradeKey);
+
+        res.status(HTTP_STATUS.ok).json(stats);
+      } catch (error) {
+        res.status(HTTP_STATUS.badRequest).json({
+          error: error.message
+        });
+      }
     }
   };
 }
