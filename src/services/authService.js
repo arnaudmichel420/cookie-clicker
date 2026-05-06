@@ -1,88 +1,8 @@
-const crypto = require("node:crypto");
-
-function normalizeEmail(email) {
-  return typeof email === "string" ? email.trim() : "";
-}
-
-function createUserRepository(seedUsers = []) {
-  const records = seedUsers.map((user, index) => ({
-    id: user.id ?? index + 1,
-    token: user.token ?? null,
-    ...user
-  }));
-
-  return {
-    async create(user) {
-      const createdUser = {
-        id: records.length + 1,
-        token: null,
-        ...user
-      };
-
-      records.push(createdUser);
-
-      return createdUser;
-    },
-    async findByEmail(email) {
-      return records.find((user) => user.email === email) ?? null;
-    },
-    async findByToken(token) {
-      return records.find((user) => user.token === token) ?? null;
-    },
-    async removeToken(userId) {
-      const user = records.find((record) => record.id === userId);
-
-      if (user) {
-        user.token = null;
-      }
-    },
-    async saveToken(userId, token) {
-      const user = records.find((record) => record.id === userId);
-
-      if (user) {
-        user.token = token;
-      }
-    }
-  };
-}
-
-function createPasswordService() {
-  return {
-    async hash(password) {
-      return crypto.createHash("sha256").update(password).digest("hex");
-    },
-    async verify(password, passwordHash) {
-      const hashedPassword = await this.hash(password);
-
-      return hashedPassword === passwordHash;
-    }
-  };
-}
-
-function createTokenService() {
-  const activeTokens = new Set();
-
-  return {
-    async generate() {
-      const token = crypto.randomBytes(24).toString("hex");
-      activeTokens.add(token);
-
-      return token;
-    },
-    async verify(token) {
-      if (!token) {
-        return null;
-      }
-
-      return activeTokens.has(token) ? token : null;
-    },
-    async revoke(token) {
-      if (token) {
-        activeTokens.delete(token);
-      }
-    }
-  };
-}
+const { AUTH_ERRORS } = require("../constants/auth");
+const { createUserRepository } = require("../repositories/inMemoryUserRepository");
+const { normalizeEmail } = require("../utils/auth");
+const { createPasswordService } = require("./passwordService");
+const { createTokenService } = require("./tokenService");
 
 function createAuthService({
   userRepository = createUserRepository(),
@@ -94,17 +14,17 @@ function createAuthService({
       const normalizedEmail = normalizeEmail(email);
 
       if (!normalizedEmail) {
-        throw new Error("Adresse email obligatoire");
+        throw new Error(AUTH_ERRORS.missingEmail);
       }
 
       if (!password) {
-        throw new Error("Mot de passe obligatoire");
+        throw new Error(AUTH_ERRORS.missingPassword);
       }
 
       const existingUser = await userRepository.findByEmail(normalizedEmail);
 
       if (existingUser) {
-        throw new Error("Adresse email déjà utilisé");
+        throw new Error(AUTH_ERRORS.duplicateEmail);
       }
 
       const passwordHash = await passwordService.hash(password);
@@ -124,13 +44,13 @@ function createAuthService({
       const user = await userRepository.findByEmail(normalizedEmail);
 
       if (!user) {
-        throw new Error("Adresse email invalide");
+        throw new Error(AUTH_ERRORS.invalidEmail);
       }
 
       const isPasswordValid = await passwordService.verify(password, user.passwordHash);
 
       if (!isPasswordValid) {
-        throw new Error("Mot de passe invalide");
+        throw new Error(AUTH_ERRORS.invalidPassword);
       }
 
       const token = await tokenService.generate(user);

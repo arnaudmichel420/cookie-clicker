@@ -1,20 +1,15 @@
 const registerForm = document.getElementById("register-form");
-const feedback = document.getElementById("feedback");
-
-function setFeedback(message, kind) {
-  feedback.textContent = message;
-  feedback.dataset.kind = kind ?? "";
-}
+const feedback = window.createFeedbackController("feedback");
 
 async function initializeRegisterPage() {
   const session = await window.authClient.restoreSession();
 
   if (session.isAuthenticated) {
-    window.location.replace("/account");
+    window.redirectTo(window.AUTH_ROUTES.account);
     return;
   }
 
-  setFeedback("Créez votre compte puis connectez-vous.");
+  feedback.set(window.AUTH_MESSAGES.registerDefault);
 }
 
 registerForm.addEventListener("submit", async (event) => {
@@ -25,7 +20,7 @@ registerForm.addEventListener("submit", async (event) => {
   const passwordConfirmation = formData.get("passwordConfirmation");
 
   if (password !== passwordConfirmation) {
-    setFeedback("Les mots de passe ne correspondent pas.", "error");
+    feedback.set(window.AUTH_MESSAGES.registerMismatch, "error");
     return;
   }
 
@@ -37,13 +32,13 @@ registerForm.addEventListener("submit", async (event) => {
   const { response, data } = await window.authClient.register(payload);
 
   if (!response.ok) {
-    setFeedback(data.error ?? "Impossible de créer le compte.", "error");
+    feedback.set(data.error ?? window.AUTH_MESSAGES.registerError, "error");
     return;
   }
 
   registerForm.reset();
-  setFeedback("Compte créé. Redirection vers la connexion.", "success");
-  window.location.replace("/login");
+  feedback.set(window.AUTH_MESSAGES.registerSuccess, "success");
+  window.redirectTo(window.AUTH_ROUTES.login);
 });
 
 initializeRegisterPage();

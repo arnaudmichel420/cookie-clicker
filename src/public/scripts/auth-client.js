@@ -1,5 +1,10 @@
 (function attachAuthClient(windowObject) {
   const TOKEN_KEY = "auth_token";
+  const sessionDefaults = {
+    clearToken: false,
+    isAuthenticated: false,
+    user: null
+  };
 
   async function requestJson(url, options) {
     const response = await fetch(url, options);
@@ -24,11 +29,7 @@
     const token = getToken();
 
     if (!token) {
-      return {
-        clearToken: false,
-        isAuthenticated: false,
-        user: null
-      };
+      return sessionDefaults;
     }
 
     const { response, data } = await requestJson("/session", {

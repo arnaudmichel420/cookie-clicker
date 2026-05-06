@@ -1,20 +1,15 @@
 const loginForm = document.getElementById("login-form");
-const feedback = document.getElementById("feedback");
-
-function setFeedback(message, kind) {
-  feedback.textContent = message;
-  feedback.dataset.kind = kind ?? "";
-}
+const feedback = window.createFeedbackController("feedback");
 
 async function initializeLoginPage() {
   const session = await window.authClient.restoreSession();
 
   if (session.isAuthenticated) {
-    window.location.replace("/account");
+    window.redirectTo(window.AUTH_ROUTES.account);
     return;
   }
 
-  setFeedback("Connectez-vous pour retrouver votre session.");
+  feedback.set(window.AUTH_MESSAGES.loginDefault);
 }
 
 loginForm.addEventListener("submit", async (event) => {
@@ -29,13 +24,13 @@ loginForm.addEventListener("submit", async (event) => {
   const { response, data } = await window.authClient.login(payload);
 
   if (!response.ok) {
-    setFeedback(data.error ?? "Connexion impossible.", "error");
+    feedback.set(data.error ?? window.AUTH_MESSAGES.loginError, "error");
     return;
   }
 
   window.authClient.setToken(data.token);
-  setFeedback("Connexion réussie. Redirection en cours.", "success");
-  window.location.replace("/account");
+  feedback.set(window.AUTH_MESSAGES.loginSuccess, "success");
+  window.redirectTo(window.AUTH_ROUTES.account);
 });
 
 initializeLoginPage();
