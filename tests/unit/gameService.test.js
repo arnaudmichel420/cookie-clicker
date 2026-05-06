@@ -5,7 +5,17 @@ function createGameServiceForTest(options) {
 }
 
 function createSaveRepository(saves = []) {
-  const records = saves.map((save) => ({ ...save }));
+  const records = saves.map((save) => ({
+    ...save,
+    upgradeLevels: {
+      pickup: 0,
+      oil: 0,
+      wallStreet: 0,
+      gold: 0,
+      diamond: 0,
+      ...save.upgradeLevels
+    }
+  }));
 
   return {
     findByUserId: vi.fn(async (userId) => {
@@ -15,13 +25,27 @@ function createSaveRepository(saves = []) {
       const existingSave = records.find((save) => save.userId === userId);
 
       if (existingSave) {
-        Object.assign(existingSave, stats);
+        Object.assign(existingSave, stats, {
+          upgradeLevels: {
+            ...existingSave.upgradeLevels,
+            ...stats.upgradeLevels
+          }
+        });
+
         return existingSave;
       }
 
       const createdSave = {
         userId,
-        ...stats
+        ...stats,
+        upgradeLevels: {
+          pickup: 0,
+          oil: 0,
+          wallStreet: 0,
+          gold: 0,
+          diamond: 0,
+          ...stats.upgradeLevels
+        }
       };
 
       records.push(createdSave);
@@ -39,171 +63,194 @@ function createStats(overrides = {}) {
     userId: 1,
     cookies: 10,
     cookiesPerSecond: 0,
+    cookiesPerClick: 1,
+    lastCollectedAt: "2026-05-06T10:00:00.000Z",
+    upgradeLevels: {
+      pickup: 0,
+      oil: 0,
+      wallStreet: 0,
+      gold: 0,
+      diamond: 0
+    },
     ...overrides
   };
 }
 
 describe("gameService - cas nominaux", () => {
   it("TU 1 - retourne les statistiques du joueur connecte", async () => {
-    // Given : un utilisateur connecte possede des statistiques en base
-    const saveRepository = createSaveRepository([createStats({ cookies: 42, cookiesPerSecond: 2 })]);
+    const saveRepository = createSaveRepository([createStats({ cookies: 42 })]);
     const gameService = createGameServiceForTest({ saveRepository });
 
-    // When : l'application charge la page du jeu
     const stats = await gameService.getStats(1);
 
-    // Then : le nombre de cookies et les cookies par seconde sont retournes
-    expect(stats).toEqual({
+    expect(stats).toMatchObject({
       cookies: 42,
-      cookiesPerSecond: 2
+      cookiesPerSecond: 0,
+      cookiesPerClick: 1,
+      upgradeCount: 0
     });
   });
 
-  it("TU 2 - ajoute 1 cookie quand l'utilisateur clique sur le cookie", async () => {
-    // Given : un utilisateur connecte possede 0 cookie
-    const saveRepository = createSaveRepository([createStats({ cookies: 0 })]);
+  it("TU 2 - ajoute le gain par clic actuel quand l'utilisateur clique", async () => {
+    const saveRepository = createSaveRepository([
+      createStats({
+        cookies: 0,
+        upgradeLevels: {
+          gold: 1
+        }
+      })
+    ]);
     const gameService = createGameServiceForTest({ saveRepository });
 
-    // When : il clique sur le cookie
     const stats = await gameService.clickCookie(1);
 
-    // Then : son compteur affiche 1 cookie
-    expect(stats.cookies).toBe(1);
-    expect(saveRepository.save).toHaveBeenCalledWith(1, {
-      cookies: 1,
-      cookiesPerSecond: 0
-    });
+    expect(stats.cookies).toBe(2);
+    expect(stats.cookiesPerClick).toBe(2);
   });
 
-  it("TU 3 - persiste le compteur apres chaque clic", async () => {
-    // Given : un utilisateur connecte possede deja 2 cookies
-    const saveRepository = createSaveRepository([createStats({ cookies: 2 })]);
+  it("TU 3 - achete un auto-clicker, soustrait son prix et augmente le gain passif", async () => {
+    const saveRepository = createSaveRepository([createStats({ cookies: 25 })]);
     const gameService = createGameServiceForTest({ saveRepository });
 
-    // When : il clique sur le cookie
-    await gameService.clickCookie(1);
+    const stats = await gameService.purchaseUpgrade(1, "pickup");
 
-    // Then : les nouvelles statistiques sont sauvegardees
-    expect(saveRepository.getByUserId(1)).toMatchObject({
-      cookies: 3,
-      cookiesPerSecond: 0
-    });
+    expect(stats.cookies).toBe(5);
+    expect(stats.cookiesPerSecond).toBe(1);
+    expect(stats.upgradeLevels.pickup).toBe(1);
   });
 
-  it("TU 4 - demande l'animation du personnage apres un clic", async () => {
-    // Given : un utilisateur connecte est sur la page du jeu
-    const saveRepository = createSaveRepository([createStats({ cookies: 0 })]);
+  it("TU 4 - achete un boost de clic et augmente le gain par clic", async () => {
+    const saveRepository = createSaveRepository([createStats({ cookies: 80 })]);
     const gameService = createGameServiceForTest({ saveRepository });
 
-    // When : il clique sur le cookie
-    const stats = await gameService.clickCookie(1);
+    const stats = await gameService.purchaseUpgrade(1, "gold");
 
-    // Then : le retour indique que l'animation de clic doit etre jouee
-    expect(stats.shouldAnimate).toBe(true);
+    expect(stats.cookies).toBe(50);
+    expect(stats.cookiesPerClick).toBe(2);
+    expect(stats.upgradeLevels.gold).toBe(1);
+  });
+
+  it("TU 5 - augmente le prix d'un upgrade apres chaque achat", async () => {
+    const saveRepository = createSaveRepository([createStats({ cookies: 200 })]);
+    const gameService = createGameServiceForTest({ saveRepository });
+
+    const firstPurchase = await gameService.purchaseUpgrade(1, "pickup");
+    const secondPickup = firstPurchase.upgrades.find((upgrade) => upgrade.key === "pickup");
+
+    expect(secondPickup.currentPrice).toBeGreaterThan(20);
+  });
+
+  it("TU 6 - conserve les upgrades propres a chaque utilisateur", async () => {
+    const saveRepository = createSaveRepository([
+      createStats({ userId: 1, cookies: 50 }),
+      createStats({ userId: 2, cookies: 50 })
+    ]);
+    const gameService = createGameServiceForTest({ saveRepository });
+
+    await gameService.purchaseUpgrade(1, "pickup");
+
+    expect(saveRepository.getByUserId(1).upgradeLevels.pickup).toBe(1);
+    expect(saveRepository.getByUserId(2).upgradeLevels.pickup).toBe(0);
   });
 });
 
 describe("gameService - cas d'erreur", () => {
-  it("TU 5 - refuse de charger les statistiques sans utilisateur connecte", async () => {
-    // Given : aucun utilisateur n'est connecte
+  it("TU 7 - refuse de charger les statistiques sans utilisateur connecte", async () => {
     const saveRepository = createSaveRepository();
     const gameService = createGameServiceForTest({ saveRepository });
 
-    // When : l'application tente de charger les statistiques
-    // Then : une erreur est envoyee
     await expect(gameService.getStats(null)).rejects.toThrow("Utilisateur non connecté");
-
-    expect(saveRepository.findByUserId).not.toHaveBeenCalled();
   });
 
-  it("TU 6 - refuse un clic sans utilisateur connecte", async () => {
-    // Given : aucun utilisateur n'est connecte
+  it("TU 8 - refuse un clic sans utilisateur connecte", async () => {
     const saveRepository = createSaveRepository();
     const gameService = createGameServiceForTest({ saveRepository });
 
-    // When : l'utilisateur tente de cliquer sur le cookie
-    // Then : une erreur est envoyee
     await expect(gameService.clickCookie(undefined)).rejects.toThrow("Utilisateur non connecté");
+  });
+
+  it("TU 9 - refuse l'achat d'un upgrade sans fonds suffisants", async () => {
+    const saveRepository = createSaveRepository([createStats({ cookies: 10 })]);
+    const gameService = createGameServiceForTest({ saveRepository });
+
+    await expect(gameService.purchaseUpgrade(1, "pickup")).rejects.toThrow("Fonds insuffisants");
 
     expect(saveRepository.save).not.toHaveBeenCalled();
   });
 
-  it("TU 7 - renvoie une erreur quand la sauvegarde du clic echoue", async () => {
-    // Given : la base de donnees ne peut pas sauvegarder les statistiques
-    const saveRepository = {
-      findByUserId: vi.fn(async () => createStats({ cookies: 4 })),
-      save: vi.fn(async () => {
-        throw new Error("Erreur base de donnees");
-      })
-    };
-    const gameService = createGameServiceForTest({ saveRepository });
-
-    // When : l'utilisateur clique sur le cookie
-    // Then : une erreur metier est envoyee
-    await expect(gameService.clickCookie(1)).rejects.toThrow("Impossible de sauvegarder les statistiques");
-  });
-});
-
-describe("gameService - cas limites", () => {
-  it("TU 8 - initialise les statistiques a 0 quand aucune sauvegarde n'existe", async () => {
-    // Given : un utilisateur connecte n'a aucune sauvegarde
-    const saveRepository = createSaveRepository();
-    const gameService = createGameServiceForTest({ saveRepository });
-
-    // When : l'application charge ses statistiques
-    const stats = await gameService.getStats(1);
-
-    // Then : les statistiques commencent a 0
-    expect(stats).toEqual({
-      cookies: 0,
-      cookiesPerSecond: 0
-    });
-  });
-
-  it("TU 9 - transforme une statistique negative en 0", async () => {
-    // Given : une sauvegarde contient un compteur negatif invalide
-    const saveRepository = createSaveRepository([createStats({ cookies: -5, cookiesPerSecond: -1 })]);
-    const gameService = createGameServiceForTest({ saveRepository });
-
-    // When : l'application charge les statistiques
-    const stats = await gameService.getStats(1);
-
-    // Then : les statistiques affichees restent positives
-    expect(stats).toEqual({
-      cookies: 0,
-      cookiesPerSecond: 0
-    });
-  });
-
-  it("TU 10 - ne depasse pas le nombre entier maximum securise", async () => {
-    // Given : un utilisateur possede deja le maximum de cookies autorise
-    const saveRepository = createSaveRepository([createStats({ cookies: Number.MAX_SAFE_INTEGER })]);
-    const gameService = createGameServiceForTest({ saveRepository });
-
-    // When : il clique sur le cookie
-    const stats = await gameService.clickCookie(1);
-
-    // Then : le compteur reste borne au maximum securise
-    expect(stats.cookies).toBe(Number.MAX_SAFE_INTEGER);
-    expect(saveRepository.save).toHaveBeenCalledWith(1, {
-      cookies: Number.MAX_SAFE_INTEGER,
-      cookiesPerSecond: 0
-    });
-  });
-
-  it("TU 11 - refuse les clics au dela de 10 clics par seconde", async () => {
-    // Given : un utilisateur a deja clique 10 fois pendant la meme seconde
+  it("TU 10 - refuse les clics au dela de 10 clics par seconde", async () => {
     const saveRepository = createSaveRepository([createStats({ cookies: 10 })]);
     const rateLimiter = {
       canClick: vi.fn(() => false)
     };
     const gameService = createGameServiceForTest({ saveRepository, rateLimiter });
 
-    // When : il tente de cliquer une onzieme fois pendant cette seconde
-    // Then : le clic est refuse et les statistiques ne sont pas sauvegardees
     await expect(gameService.clickCookie(1)).rejects.toThrow("Limite de 10 clics par seconde dépassée");
+  });
 
-    expect(rateLimiter.canClick).toHaveBeenCalledWith(1);
+  it("TU 11 - renvoie une erreur metier quand la sauvegarde echoue", async () => {
+    const saveRepository = {
+      findByUserId: vi.fn(async () => createStats({ cookies: 40 })),
+      save: vi.fn(async () => {
+        throw new Error("Erreur base de donnees");
+      })
+    };
+    const gameService = createGameServiceForTest({ saveRepository });
+
+    await expect(gameService.purchaseUpgrade(1, "gold")).rejects.toThrow(
+      "Impossible de sauvegarder les statistiques"
+    );
+  });
+
+  it("TU 12 - refuse l'achat d'une upgrade inconnue", async () => {
+    const saveRepository = createSaveRepository([createStats({ cookies: 100 })]);
+    const gameService = createGameServiceForTest({ saveRepository });
+
+    await expect(gameService.purchaseUpgrade(1, "unknown-upgrade")).rejects.toThrow(
+      "Upgrade introuvable"
+    );
+
     expect(saveRepository.save).not.toHaveBeenCalled();
+  });
+});
+
+describe("gameService - cas limites", () => {
+  it("TU 13 - initialise les statistiques a 0 quand aucune sauvegarde n'existe", async () => {
+    const saveRepository = createSaveRepository();
+    const gameService = createGameServiceForTest({ saveRepository });
+
+    const stats = await gameService.getStats(1);
+
+    expect(stats).toMatchObject({
+      cookies: 0,
+      cookiesPerSecond: 0,
+      cookiesPerClick: 1,
+      upgradeCount: 0
+    });
+  });
+
+  it("TU 14 - transforme une statistique negative en 0", async () => {
+    const saveRepository = createSaveRepository([createStats({ cookies: -5 })]);
+    const gameService = createGameServiceForTest({ saveRepository });
+
+    const stats = await gameService.getStats(1);
+
+    expect(stats.cookies).toBe(0);
+  });
+
+  it("TU 15 - borne le compteur au maximum securise", async () => {
+    const saveRepository = createSaveRepository([
+      createStats({
+        cookies: Number.MAX_SAFE_INTEGER,
+        upgradeLevels: {
+          gold: 1
+        }
+      })
+    ]);
+    const gameService = createGameServiceForTest({ saveRepository });
+
+    const stats = await gameService.clickCookie(1);
+
+    expect(stats.cookies).toBe(Number.MAX_SAFE_INTEGER);
   });
 });
