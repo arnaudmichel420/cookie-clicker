@@ -1,6 +1,8 @@
 @layer pages {
   body.page-game {
-    min-height: 100vh;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
     background:
       linear-gradient(135deg, rgba(255, 255, 255, 0.04), transparent 32%),
       radial-gradient(circle at 44% 28%, rgba(255, 215, 9, 0.14), transparent 19%),
@@ -12,10 +14,11 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) 640px;
     gap: 0;
-    width: 100%;
-    min-height: 100vh;
+    width: 100vw;
+    height: 100vh;
     margin: 0;
     padding: 0;
+    overflow: hidden;
     transition: grid-template-columns 220ms ease;
   }
 
@@ -26,7 +29,8 @@
   .game-board {
     position: relative;
     display: grid;
-    min-height: 100vh;
+    min-height: 0;
+    height: 100vh;
     place-items: center;
     padding: 120px 48px 72px;
     overflow: hidden;
@@ -215,10 +219,14 @@
 
   .shop-panel {
     position: relative;
+    display: grid;
+    align-content: start;
     align-self: stretch;
-    min-height: 100vh;
+    min-height: 0;
+    height: 100vh;
     padding: 28px 24px;
     border-radius: 0;
+    overflow: hidden;
     background:
       linear-gradient(160deg, rgba(255, 255, 255, 0.08), transparent 30%),
       rgba(1, 37, 80, 0.82);
@@ -226,16 +234,47 @@
       0 24px 80px rgba(0, 0, 0, 0.28),
       inset 1px 0 0 rgba(153, 171, 209, 0.16);
     backdrop-filter: blur(20px);
+    overscroll-behavior: contain;
     transition:
       padding 220ms ease,
       opacity 220ms ease;
+  }
+
+  .shop-edge-chevron {
+    position: absolute;
+    top: 50%;
+    left: -14px;
+    z-index: 2;
+    display: grid;
+    width: 28px;
+    height: 64px;
+    place-items: center;
+    color: var(--gold);
+    border-radius: 8px 0 0 8px;
+    background: rgba(0, 19, 47, 0.92);
+    box-shadow:
+      0 14px 32px rgba(0, 0, 0, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: translateY(-50%);
+  }
+
+  .shop-edge-chevron .ph {
+    font-size: 1.1rem;
+  }
+
+  .shop-edge-chevron:hover {
+    filter: brightness(1.08);
+  }
+
+  .shop-panel:hover,
+  .shop-panel:focus-within {
+    overflow-y: auto;
   }
 
   .shop-toggle {
     display: grid;
     width: 48px;
     height: 48px;
-    margin: 0 0 28px auto;
     place-items: center;
     padding: 0;
     color: var(--gold);
@@ -249,33 +288,214 @@
     font-size: 1.5rem;
   }
 
+  .shop-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .shop-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin: 0;
+  }
+
+  .shop-filter {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    padding: 0;
+    color: rgba(255, 255, 255, 0.72);
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 40%),
+      rgba(0, 19, 47, 0.78);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  }
+
+  .shop-filter .ph {
+    font-size: 1.35rem;
+  }
+
+  .shop-filter.is-active {
+    color: #05111f;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 40%),
+      linear-gradient(135deg, #ffd709, #ffef91);
+  }
+
   .shop-head h2 {
     margin: 0;
     font-family: "Space Grotesk", sans-serif;
     font-size: 2rem;
   }
 
+  .shop-list {
+    display: grid;
+    gap: 14px;
+    margin-top: 28px;
+    padding-bottom: 40px;
+    overflow: visible;
+  }
+
+  .upgrade-card {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 14px;
+    padding: 16px;
+    border: 1px solid rgba(153, 171, 209, 0.16);
+    border-radius: 8px;
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 42%),
+      rgba(0, 19, 47, 0.84);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
+  }
+
+  .upgrade-card[hidden] {
+    display: none;
+  }
+
+  .upgrade-art {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .upgrade-copy {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .upgrade-heading {
+    display: grid;
+    gap: 4px;
+  }
+
+  .upgrade-heading h3 {
+    margin: 0;
+    color: var(--text);
+    font-size: 1.05rem;
+  }
+
+  .upgrade-kind,
+  .upgrade-description {
+    margin: 0;
+  }
+
+  .upgrade-kind {
+    color: var(--gold);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .upgrade-description {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.94rem;
+  }
+
+  .upgrade-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+  }
+
+  .upgrade-meta div {
+    display: grid;
+    gap: 4px;
+  }
+
+  .upgrade-meta dt {
+    color: rgba(255, 255, 255, 0.56);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .upgrade-meta dd {
+    margin: 0;
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .upgrade-buy {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 52px;
+    color: #05111f;
+    font-weight: 800;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 40%),
+      linear-gradient(135deg, #ffd709, #ffef91);
+  }
+
+  .upgrade-buy:disabled {
+    color: rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
   .game-shell.is-shop-collapsed .shop-panel {
     padding: 16px 12px;
   }
 
-  .game-shell.is-shop-collapsed .shop-toggle {
-    margin: 0 auto;
+  .game-shell.is-shop-collapsed .shop-actions {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0;
   }
 
-  .game-shell.is-shop-collapsed .shop-head {
+  .game-shell.is-shop-collapsed .shop-toggle {
+    margin: 0;
+  }
+
+  .game-shell.is-shop-collapsed .shop-edge-chevron,
+  .game-shell.is-shop-collapsed .shop-toolbar,
+  .game-shell.is-shop-collapsed .shop-head,
+  .game-shell.is-shop-collapsed .shop-list {
     display: none;
   }
 
   @media (max-width: 860px) {
     .game-shell {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(152px, 42vw);
       gap: 0;
     }
 
     .game-board {
-      min-height: 78vh;
+      height: 100vh;
       padding: 112px 16px 196px;
+    }
+
+    .shop-panel {
+      height: 100vh;
+      min-height: 0;
+      padding: 20px 16px 28px;
+    }
+
+    .shop-edge-chevron {
+      left: -10px;
+      width: 24px;
+      height: 56px;
+    }
+
+    .upgrade-card {
+      grid-template-columns: 64px minmax(0, 1fr);
+    }
+
+    .upgrade-art {
+      width: 64px;
+      height: 64px;
     }
 
     .cookie-counter h1 {
@@ -308,13 +528,8 @@
       min-width: 240px;
     }
 
-    .shop-panel {
-      min-height: 180px;
-      padding: 20px;
-    }
-
     .game-shell.is-shop-collapsed {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr) 72px;
     }
   }
 }

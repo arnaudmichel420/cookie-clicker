@@ -90,3 +90,37 @@ Then : son nombre de cookies et les cookies generes par seconde sont affiches
 Given : un utilisateur connecte a gagne des cookies en cliquant sur le cookie  
 When : il recharge la page du jeu  
 Then : le compteur est recharge avec les statistiques stockees en base
+
+
+# TDD - Upgrades
+
+## User stories
+
+- L'utilisateur est connecté et clique sur le cookie, avec l'argent récolté il peut acheter des upgrades
+- L'utilisateur voit le compteur du clicker être modifié en fonction de l'upgrade qu'il a acheté.
+
+## Criteres d'acceptation
+
+- Un upgrade peut être acheté uniquement si les fonds nécessaires sont fournis
+- Si un upgrade est acheté, alors le prix d'achat est soustrait
+- Au rechargement de la page, l'upgrade acheté reste actif
+
+## Tests E2E
+
+### E2E 1 - Achat d'une upgrade avec fonds suffisants
+
+Given : un utilisateur est connecté et possède suffisamment de cookies pour acheter une upgrade  
+When : il clique sur l'upgrade disponible  
+Then : l'upgrade est achetée, le prix est soustrait du compteur, et l'effet de l'upgrade est appliqué
+
+### E2E 2 - Achat d'une upgrade sans fonds suffisants
+
+Given : un utilisateur est connecté et ne possède pas assez de cookies pour acheter une upgrade  
+When : il tente de cliquer sur l'upgrade  
+Then : l'upgrade n'est pas achetée et un message d'erreur est affiché
+
+### E2E 3 - Persistance des upgrades achetées
+
+Given : un utilisateur est connecté et a acheté une upgrade  
+When : il recharge la page du jeu  
+Then : l'upgrade achetée reste active et ses effets sont appliqués
