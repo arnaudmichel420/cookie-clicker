@@ -1,5 +1,6 @@
 (function attachGameEffects(windowObject) {
   const DOLLAR_IMAGE_SRC = "/images/effects/dollar.png";
+  const FLAG_IMAGE_SRC = "/images/effects/america.png";
   const FIGHTER_IMAGE_SRC = "/images/effects/avion-chasse.png";
   const MISSILE_IMAGE_SRC = "/images/effects/missile.png";
   const SPAM_WINDOW_MS = 2000;
@@ -7,11 +8,18 @@
   const MISSILE_THRESHOLD = 12;
   const FIGHTER_COOLDOWN_MS = 2000;
   const MISSILE_COOLDOWN_MS = 2000;
+  const FLAG_RAIN_MIN_MS = 1800;
+  const FLAG_RAIN_MAX_MS = 3000;
+  const FLAG_RAIN_INTERVAL_MS = 160;
+  const FLAG_STREAK_SECONDS = 10;
+  const FLAG_RAIN_COOLDOWN_MS = FLAG_STREAK_SECONDS * 1000;
 
   function createGameEffects({ layer, characterLayer }) {
     let recentClicks = [];
     let lastFighterAt = 0;
     let lastMissileAt = 0;
+    let secondBuckets = [];
+    let lastFlagRainAt = 0;
 
     function cleanupAfterAnimation(element, durationMs) {
       windowObject.setTimeout(() => {
@@ -19,25 +27,53 @@
       }, durationMs);
     }
 
-    function spawnDollar() {
-      const dollar = document.createElement("img");
+    function spawnFallingAsset({ src, className, fixedRotation = null }) {
+      const element = document.createElement("img");
       const scale = Number((0.6 + Math.random() * 0.8).toFixed(2));
       const durationMs = 1350 + Math.round(Math.random() * 350);
       const left = 6 + Math.random() * 74;
       const drift = Math.round(Math.random() * 140 - 70);
-      const rotation = Math.round(Math.random() * 36 - 18);
+      const rotation =
+        fixedRotation === null ? Math.round(Math.random() * 36 - 18) : fixedRotation;
 
-      dollar.src = DOLLAR_IMAGE_SRC;
-      dollar.alt = "";
-      dollar.className = "effect-dollar";
-      dollar.draggable = false;
-      dollar.style.setProperty("--effect-left", `${left}vw`);
-      dollar.style.setProperty("--effect-scale", scale);
-      dollar.style.setProperty("--effect-duration", `${durationMs}ms`);
-      dollar.style.setProperty("--effect-drift", `${drift}px`);
-      dollar.style.setProperty("--effect-rotation", `${rotation}deg`);
-      layer.append(dollar);
-      cleanupAfterAnimation(dollar, durationMs + 100);
+      element.src = src;
+      element.alt = "";
+      element.className = className;
+      element.draggable = false;
+      element.style.setProperty("--effect-left", `${left}vw`);
+      element.style.setProperty("--effect-scale", scale);
+      element.style.setProperty("--effect-duration", `${durationMs}ms`);
+      element.style.setProperty("--effect-drift", `${drift}px`);
+      element.style.setProperty("--effect-rotation", `${rotation}deg`);
+      layer.append(element);
+      cleanupAfterAnimation(element, durationMs + 100);
+    }
+
+    function spawnDollar() {
+      spawnFallingAsset({
+        src: DOLLAR_IMAGE_SRC,
+        className: "effect-dollar"
+      });
+    }
+
+    function spawnMilestoneFlag() {
+      const element = document.createElement("img");
+      const scale = Number((0.9 + Math.random() * 1.2).toFixed(2));
+      const durationMs = 1700 + Math.round(Math.random() * 600);
+      const left = 4 + Math.random() * 82;
+      const drift = Math.round(Math.random() * 200 - 100);
+
+      element.src = FLAG_IMAGE_SRC;
+      element.alt = "";
+      element.className = "effect-flag effect-flag-milestone";
+      element.draggable = false;
+      element.style.setProperty("--effect-left", `${left}vw`);
+      element.style.setProperty("--effect-scale", scale);
+      element.style.setProperty("--effect-duration", `${durationMs}ms`);
+      element.style.setProperty("--effect-drift", `${drift}px`);
+      element.style.setProperty("--effect-rotation", "90deg");
+      layer.append(element);
+      cleanupAfterAnimation(element, durationMs + 100);
     }
 
     function spawnFighterJet() {
@@ -161,10 +197,61 @@
       }
     }
 
+    function registerClickStreak() {
+      const now = Date.now();
+      const currentSecond = Math.floor(now / 1000);
+      const lastBucket = secondBuckets.at(-1);
+
+      if (!lastBucket || lastBucket.second !== currentSecond) {
+        secondBuckets.push({
+          second: currentSecond,
+          count: 1
+        });
+      } else {
+        lastBucket.count += 1;
+      }
+
+      secondBuckets = secondBuckets.filter(
+        (bucket) => currentSecond - bucket.second < FLAG_STREAK_SECONDS
+      );
+
+      if (secondBuckets.length < FLAG_STREAK_SECONDS) {
+        return;
+      }
+
+      const hasContinuousStreak = secondBuckets.every((bucket, index) => {
+        const expectedSecond = currentSecond - (FLAG_STREAK_SECONDS - 1) + index;
+        return bucket.second === expectedSecond && bucket.count >= 1;
+      });
+
+      if (hasContinuousStreak && now - lastFlagRainAt >= FLAG_RAIN_COOLDOWN_MS) {
+        lastFlagRainAt = now;
+        triggerFlagRain();
+      }
+    }
+
+    function triggerFlagRain() {
+      const durationMs =
+        FLAG_RAIN_MIN_MS +
+        Math.round(Math.random() * (FLAG_RAIN_MAX_MS - FLAG_RAIN_MIN_MS));
+      const startedAt = Date.now();
+
+      spawnMilestoneFlag();
+
+      const intervalId = windowObject.setInterval(() => {
+        spawnMilestoneFlag();
+
+        if (Date.now() - startedAt >= durationMs) {
+          windowObject.clearInterval(intervalId);
+        }
+      }, FLAG_RAIN_INTERVAL_MS);
+    }
+
     return {
       triggerClickEffects() {
         spawnDollar();
         registerClickBurst();
+        registerClickStreak();
       },
       triggerPurchaseEffects(purchaseEffect) {
         spawnFireworks(purchaseEffect);
