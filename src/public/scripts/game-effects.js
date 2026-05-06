@@ -29,7 +29,13 @@
       }, durationMs);
     }
 
-    function spawnFallingAsset({ src, className, fixedRotation = null }) {
+    function spawnFallingAsset(options) {
+      const src = options.src;
+      const className = options.className;
+      const fixedRotation =
+        Object.prototype.hasOwnProperty.call(options, "fixedRotation")
+          ? options.fixedRotation
+          : null;
       const element = document.createElement("img");
       const scale = Number((0.6 + Math.random() * 0.8).toFixed(2));
       const durationMs = 1350 + Math.round(Math.random() * 350);
@@ -207,7 +213,10 @@
     function registerClickStreak() {
       const now = Date.now();
       const currentSecond = Math.floor(now / 1000);
-      const lastBucket = secondBuckets.at(-1);
+      const lastBucket =
+        secondBuckets.length > 0
+          ? secondBuckets[secondBuckets.length - 1]
+          : null;
 
       if (!lastBucket || lastBucket.second !== currentSecond) {
         secondBuckets.push({

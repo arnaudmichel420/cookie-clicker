@@ -23,6 +23,7 @@
   const gameEffects = window.createGameEffects({
     layer: effectsLayer,
     characterLayer: characterEffects
+  });
   const gameSoundEffects = window.createGameSoundEffects({
     Audio: window.Audio
   });
