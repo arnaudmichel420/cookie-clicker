@@ -2,6 +2,7 @@ const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+const Database = require("better-sqlite3");
 
 const PORT = 3211;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
@@ -51,6 +52,26 @@ function stopServer(server) {
     server.once("exit", resolve);
     server.kill();
   });
+}
+
+function findStoredGameSave(dbPath, email) {
+  const db = new Database(dbPath, {
+    readonly: true
+  });
+  const save = db
+    .prepare(
+      `
+        SELECT game_saves.user_id, game_saves.trump_dollars, game_saves.trump_dollars_per_second
+        FROM game_saves
+        INNER JOIN users ON users.id = game_saves.user_id
+        WHERE users.email = ?
+      `
+    )
+    .get(email);
+
+  db.close();
+
+  return save;
 }
 
 describe("cookie qui click", () => {
@@ -201,7 +222,21 @@ describe("cookie qui click", () => {
     expect(body.cookies).toBe(3);
   });
 
-  it("E2E 6 - conserve les trump dollars apres redemarrage du serveur", async () => {
+  it("E2E 6 - stocke les trump dollars dans la table game_saves SQLite", async () => {
+    // Given : un utilisateur connecte gagne des trump dollars
+    const { email, token } = await createAuthenticatedUser();
+    await clickCookie(token);
+    await clickCookie(token);
+
+    // When : on consulte directement la base SQLite utilisee par le serveur
+    const storedSave = findStoredGameSave(dbPath, email);
+
+    // Then : la progression est enregistree dans game_saves
+    expect(storedSave.trump_dollars).toBe(2);
+    expect(storedSave.trump_dollars_per_second).toBe(0);
+  });
+
+  it("E2E 7 - conserve les trump dollars apres redemarrage du serveur", async () => {
     // Given : un utilisateur connecte a gagne des trump dollars
     const { email, token } = await createAuthenticatedUser();
     await clickCookie(token);

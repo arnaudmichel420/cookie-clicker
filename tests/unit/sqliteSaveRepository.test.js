@@ -1,10 +1,30 @@
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+const Database = require("better-sqlite3");
 const { createSqliteSaveRepository } = require("../../src/repositories/sqliteSaveRepository");
 
 function createTempDbPath() {
   return path.join(fs.mkdtempSync(path.join(os.tmpdir(), "cookie-clicker-save-")), "game.sqlite");
+}
+
+function findStoredSave(dbPath, userId) {
+  const db = new Database(dbPath, {
+    readonly: true
+  });
+  const save = db
+    .prepare(
+      `
+        SELECT user_id, trump_dollars, trump_dollars_per_second
+        FROM game_saves
+        WHERE user_id = ?
+      `
+    )
+    .get(userId);
+
+  db.close();
+
+  return save;
 }
 
 describe("sqliteSaveRepository", () => {
@@ -21,6 +41,11 @@ describe("sqliteSaveRepository", () => {
       userId: 1,
       cookies: 12,
       cookiesPerSecond: 3
+    });
+    expect(findStoredSave(dbPath, 1)).toEqual({
+      user_id: 1,
+      trump_dollars: 12,
+      trump_dollars_per_second: 3
     });
 
     repository.close();
@@ -40,11 +65,17 @@ describe("sqliteSaveRepository", () => {
     });
 
     const save = await repository.findByUserId(1);
+    const storedSave = findStoredSave(dbPath, 1);
 
     expect(save).toEqual({
       userId: 1,
       cookies: 18,
       cookiesPerSecond: 4
+    });
+    expect(storedSave).toEqual({
+      user_id: 1,
+      trump_dollars: 18,
+      trump_dollars_per_second: 4
     });
 
     repository.close();
