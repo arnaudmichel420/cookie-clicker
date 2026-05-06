@@ -10,6 +10,8 @@
     "lint": "eslint .",
     "test": "vitest run tests/unit",
     "test:e2e": "vitest run tests/e2e",
+    "coverage": "vitest run tests/unit --coverage",
+    "coverage:e2e": "vitest run tests/e2e --coverage",
     "format": "prettier . --write",
     "format:check": "prettier . --check"
   },
@@ -28,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@vitest/coverage-v8": "^4.1.4",
     "eslint": "^10.2.0",
     "globals": "^17.5.0",
     "prettier": "^3.8.2",
