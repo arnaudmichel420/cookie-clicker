@@ -180,6 +180,93 @@ describe("cookie qui click", () => {
     expect(html).toContain("Auto-click");
   });
 
+  it("E2E 8 - charge le module de sound effect sur la page du jeu", async () => {
+    const { token } = await createAuthenticatedUser();
+
+    const response = await fetch(BASE_URL, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    const html = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(html).toContain('<script src="/scripts/sound-effects.js"></script>');
+    expect(html.indexOf("/scripts/sound-effects.js")).toBeLessThan(
+      html.indexOf("/scripts/game-page.js")
+    );
+  });
+
+  it("E2E 9 - expose les sons de clic sur Trump", async () => {
+    const constantsResponse = await fetch(`${BASE_URL}/scripts/constants.js`);
+    const constantsScript = await constantsResponse.text();
+    const clickSoundResponse = await fetch(
+      `${BASE_URL}/sounds/click/ksjsbwuil-cash-register-1-513922.mp3`
+    );
+
+    expect(constantsResponse.status).toBe(200);
+    expect(constantsScript).toContain("window.SOUND_EFFECTS");
+    expect(constantsScript).toContain("/sounds/click/ksjsbwuil-cash-register-1-513922.mp3");
+    expect(constantsScript).toContain("/sounds/click/dragon-studio-cash-register-kaching-376867.mp3");
+    expect(clickSoundResponse.status).toBe(200);
+  });
+
+  it("E2E 10 - expose les sons d'achat d'upgrade", async () => {
+    const constantsResponse = await fetch(`${BASE_URL}/scripts/constants.js`);
+    const constantsScript = await constantsResponse.text();
+    const upgradeSoundResponse = await fetch(
+      `${BASE_URL}/sounds/upgrades/donald-trump-approves-this.mp3`
+    );
+
+    expect(constantsResponse.status).toBe(200);
+    expect(constantsScript).toContain("/sounds/upgrades/donald-trump-approves-this.mp3");
+    expect(constantsScript).toContain("/sounds/upgrades/trump-mr-toughguy.mp3");
+    expect(upgradeSoundResponse.status).toBe(200);
+  });
+
+  it("E2E 13 - expose la musique de fond", async () => {
+    const constantsResponse = await fetch(`${BASE_URL}/scripts/constants.js`);
+    const constantsScript = await constantsResponse.text();
+    const backgroundMusicResponse = await fetch(`${BASE_URL}/sounds/usa-anthem.mp3`);
+
+    expect(constantsResponse.status).toBe(200);
+    expect(constantsScript).toContain('background: "/sounds/usa-anthem.mp3"');
+    expect(backgroundMusicResponse.status).toBe(200);
+  });
+
+  it("E2E 11 - branche les sons uniquement sur les actions utilisateur", async () => {
+    const gamePageResponse = await fetch(`${BASE_URL}/scripts/game-page.js`);
+    const gamePageScript = await gamePageResponse.text();
+
+    expect(gamePageResponse.status).toBe(200);
+    expect(gamePageScript).toContain("gameSoundEffects.startBackgroundMusic()");
+    expect(gamePageScript).toContain("gameSoundEffects.playClickSound()");
+    expect(gamePageScript).toContain("gameSoundEffects.playUpgradeSound()");
+    expect(gamePageScript.indexOf("gameSoundEffects.playClickSound()")).toBeGreaterThan(
+      gamePageScript.indexOf("async function clickCookie()")
+    );
+    expect(gamePageScript.indexOf("gameSoundEffects.playUpgradeSound()")).toBeGreaterThan(
+      gamePageScript.indexOf("async function purchaseUpgrade(upgradeKey)")
+    );
+    expect(
+      gamePageScript.slice(
+        gamePageScript.indexOf("async function requestGameState()"),
+        gamePageScript.indexOf("async function clickCookie()")
+      )
+    ).not.toContain("gameSoundEffects.play");
+  });
+
+  it("E2E 12 - conserve une file de lecture pour les sons d'upgrades", async () => {
+    const soundEffectsResponse = await fetch(`${BASE_URL}/scripts/sound-effects.js`);
+    const soundEffectsScript = await soundEffectsResponse.text();
+
+    expect(soundEffectsResponse.status).toBe(200);
+    expect(soundEffectsScript).toContain("let upgradeQueue = Promise.resolve()");
+    expect(soundEffectsScript).toContain("const queuedSound = upgradeQueue.then");
+    expect(soundEffectsScript).toContain('audio.addEventListener("ended"');
+    expect(soundEffectsScript).toContain("CLICK_SOUND_LIMIT_PER_SECOND = 2");
+  });
+
   it("E2E 1 - Achat d'une upgrade avec fonds suffisants", async () => {
     const { token } = await createAuthenticatedUser();
 

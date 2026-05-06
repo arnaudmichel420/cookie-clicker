@@ -124,3 +124,49 @@ Then : l'upgrade n'est pas achetée et un message d'erreur est affiché
 Given : un utilisateur est connecté et a acheté une upgrade  
 When : il recharge la page du jeu  
 Then : l'upgrade achetée reste active et ses effets sont appliqués
+
+# TDD - Sound effect
+
+## User stories
+
+- En tant qu'utilisateur connecté, je souhaite avoir du sound effect quand je clique sur Trump et quand j'achète des upgrades
+
+## Criteres d'acceptation
+
+- Le son se lance quand j'achète une upgrade
+- Quand j'achète deux upgrades, les sons sont joués l'un après l'autre
+- Le son se lance quand je clique sur Trump
+- Quand je spamme les clics, au maximum 2 sons de clic sont joues par seconde
+- L'autocliqueur ne lance pas de sons
+
+## Tests E2E
+
+### E2E 1 - Son au clic sur Trump
+
+Given : un utilisateur est connecte et arrive sur la page du jeu  
+When : il clique sur Trump  
+Then : un son de clic est lance
+
+### E2E 2 - Limitation des sons au spam de clics
+
+Given : un utilisateur est connecte et arrive sur la page du jeu  
+When : il clique plusieurs fois rapidement sur Trump  
+Then : au maximum 2 sons de clic sont joues pendant la meme seconde
+
+### E2E 3 - Son a l'achat d'une upgrade
+
+Given : un utilisateur est connecte et possede suffisamment de cookies pour acheter une upgrade  
+When : il achete une upgrade  
+Then : un son d'achat d'upgrade est lance
+
+### E2E 4 - Sons d'upgrades joues l'un apres l'autre
+
+Given : un utilisateur est connecte et possede suffisamment de cookies pour acheter deux upgrades  
+When : il achete deux upgrades rapidement  
+Then : les sons d'achat d'upgrade sont joues l'un apres l'autre
+
+### E2E 5 - Aucun son lance par l'autocliqueur
+
+Given : un utilisateur est connecte et possede une upgrade qui genere automatiquement des cookies  
+When : l'autocliqueur ajoute des cookies au compteur  
+Then : aucun son de clic ni d'upgrade n'est lance automatiquement
