@@ -1,8 +1,10 @@
 const { spawn } = require("node:child_process");
+const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const Database = require("better-sqlite3");
+const { DEFAULT_USER } = require("../../src/repositories/sqliteUserRepository");
 
 const PORT = 3210;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
@@ -47,6 +49,16 @@ function startServer(dbPath) {
   });
 }
 
+function seedDefaultUser(dbPath) {
+  execFileSync("npm", ["run", "seed"], {
+    env: {
+      ...process.env,
+      DB_PATH: dbPath
+    },
+    stdio: "pipe"
+  });
+}
+
 function stopServer(server) {
   return new Promise((resolve) => {
     server.once("exit", resolve);
@@ -72,6 +84,7 @@ describe("authentification utilisateur", () => {
   let server;
 
   beforeAll(async () => {
+    seedDefaultUser(dbPath);
     server = await startServer(dbPath);
   });
 
@@ -115,6 +128,21 @@ describe("authentification utilisateur", () => {
     expect(loginResponse.status).toBe(200);
     expect(body.token).toEqual(expect.any(String));
     expect(body.token.length).toBeGreaterThan(0);
+  });
+
+  it("permet de se connecter avec l'utilisateur seed par defaut", async () => {
+    // Given : la base SQLite a ete initialisee au demarrage du serveur
+    const storedUser = findStoredUser(dbPath, DEFAULT_USER.email);
+
+    // When : l'utilisateur par defaut se connecte avec ses identifiants
+    const loginResponse = await login(DEFAULT_USER.email, DEFAULT_USER.password);
+    const body = await loginResponse.json();
+
+    // Then : le compte seed existe en base et l'authentification fonctionne
+    expect(storedUser.email).toBe(DEFAULT_USER.email);
+    expect(loginResponse.status).toBe(200);
+    expect(body.user.email).toBe(DEFAULT_USER.email);
+    expect(body.token).toEqual(expect.any(String));
   });
 
   it("stocke le compte utilisateur dans la base SQLite", async () => {
