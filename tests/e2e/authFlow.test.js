@@ -225,15 +225,16 @@ describe("authentification utilisateur", () => {
     expect(body.isAuthenticated).toBe(true);
   });
 
-  it("invite un utilisateur non connecte a se connecter", async () => {
+  it("redirige un utilisateur non connecte de la racine vers la connexion", async () => {
     // Given : un utilisateur arrive sur le site sans etre connecte
-    // When : la page se charge
-    const response = await fetch(BASE_URL);
-    const html = await response.text();
+    // When : il tente d'ouvrir la racine qui correspond au jeu
+    const response = await fetch(BASE_URL, {
+      redirect: "manual"
+    });
 
-    // Then : il est invite a se connecter
-    expect(response.status).toBe(200);
-    expect(html).toContain("Se connecter");
+    // Then : il ne voit pas le jeu et part vers la page de connexion
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe("/login");
   });
 
   it("refuse la creation d'un compte avec un email deja utilise", async () => {

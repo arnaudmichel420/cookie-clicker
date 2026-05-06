@@ -136,6 +136,37 @@ describe("cookie qui click", () => {
     });
   }
 
+  it("E2E 0 - affiche le jeu sur la racine pour un utilisateur connecte", async () => {
+    // Given : un utilisateur est connecte
+    const { token } = await createAuthenticatedUser();
+
+    // When : il ouvre la racine de l'application
+    const response = await fetch(BASE_URL, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    const html = await response.text();
+
+    // Then : la racine affiche le jeu et pas une landing page
+    expect(response.status).toBe(200);
+    expect(html).toContain("Sovereign Clicker");
+    expect(html).toContain("Trump dollars");
+    expect(html).toContain("Gagner un trump dollar");
+  });
+
+  it("E2E 0b - redirige un utilisateur non connecte hors du jeu", async () => {
+    // Given : aucun utilisateur n'est connecte
+    // When : il tente d'ouvrir le jeu
+    const response = await fetch(BASE_URL, {
+      redirect: "manual"
+    });
+
+    // Then : le serveur le redirige vers la connexion
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe("/login");
+  });
+
   it("E2E 1 - incremente le compteur d'un cookie apres un clic", async () => {
     // Given : un utilisateur est connecte et arrive sur la page du jeu avec 0 cookie
     const { token } = await createAuthenticatedUser();
@@ -191,7 +222,7 @@ describe("cookie qui click", () => {
     await clickCookie(token);
 
     // When : il arrive sur la page du jeu
-    const gameResponse = await fetch(`${BASE_URL}/game`, {
+    const gameResponse = await fetch(BASE_URL, {
       headers: {
         Authorization: `Bearer ${token}`
       }

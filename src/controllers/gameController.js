@@ -1,9 +1,9 @@
 const { HTTP_STATUS } = require("../constants/auth");
-const { readBearerToken } = require("../utils/auth");
+const { readAuthToken } = require("../utils/auth");
 
 function createGameController({ authService, gameService }) {
   async function resolveUser(req, res) {
-    const token = readBearerToken(req);
+    const token = readAuthToken(req);
     const session = await authService.resolveSession(token);
 
     if (!session.user) {
@@ -19,16 +19,11 @@ function createGameController({ authService, gameService }) {
 
   return {
     async page(req, res) {
-      const token = readBearerToken(req);
+      const token = readAuthToken(req);
       const session = await authService.resolveSession(token);
 
       if (!session.user) {
-        return res.status(HTTP_STATUS.unauthorized).render("pages/game", {
-          cookies: 0,
-          cookiesPerSecond: 0,
-          isAuthenticated: false,
-          title: "Sovereign Clicker"
-        });
+        return res.redirect("/login");
       }
 
       const stats = await gameService.getStats(session.user.id);
