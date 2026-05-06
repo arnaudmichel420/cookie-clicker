@@ -18,7 +18,7 @@
   ];
   const trumpCharacter = window.createTrumpCharacter({
     button: cookieButton,
-    frames
+    frames: frames
   });
   const gameEffects = window.createGameEffects({
     layer: effectsLayer,
@@ -29,9 +29,10 @@
   let stateRefreshHandle = null;
   let activeFilter = null;
 
-  function setFeedback(message, state = "info") {
+  function setFeedback(message, state) {
+    const nextState = state === undefined ? "info" : state;
     feedback.textContent = message;
-    feedback.dataset.state = state;
+    feedback.dataset.state = nextState;
   }
 
   function renderUpgradeCard(stats, card) {
@@ -62,19 +63,20 @@
     upgradeCards.forEach((card) => renderUpgradeCard(data, card));
   }
 
-  function applyUpgradeFilter(nextFilter = null) {
-    activeFilter = nextFilter;
+  function applyUpgradeFilter(nextFilter) {
+    const resolvedFilter = nextFilter === undefined ? null : nextFilter;
+    activeFilter = resolvedFilter;
 
     for (const filterButton of shopFilters) {
       filterButton.classList.toggle(
         "is-active",
-        nextFilter !== null && filterButton.dataset.upgradeFilter === nextFilter
+        resolvedFilter !== null && filterButton.dataset.upgradeFilter === resolvedFilter
       );
     }
 
     for (const card of upgradeCards) {
       const shouldShow =
-        nextFilter === null || card.dataset.upgradeFilterKind === nextFilter;
+        resolvedFilter === null || card.dataset.upgradeFilterKind === resolvedFilter;
       card.hidden = !shouldShow;
     }
   }
@@ -103,7 +105,7 @@
 
   function handleGameError(response, data, fallbackMessage) {
     if (!response.ok) {
-      disableGame(data.error ?? fallbackMessage);
+      disableGame(data.error || fallbackMessage);
       return true;
     }
 
@@ -145,7 +147,7 @@
     const { response, data } = await window.gameClient.purchaseUpgrade(upgradeKey);
 
     if (!response.ok) {
-      setFeedback(data.error ?? window.GAME_MESSAGES.purchaseError, "error");
+      setFeedback(data.error || window.GAME_MESSAGES.purchaseError, "error");
       return;
     }
 

@@ -14,7 +14,9 @@
   const FLAG_STREAK_SECONDS = 10;
   const FLAG_RAIN_COOLDOWN_MS = FLAG_STREAK_SECONDS * 1000;
 
-  function createGameEffects({ layer, characterLayer }) {
+  function createGameEffects(options) {
+    const layer = options.layer;
+    const characterLayer = options.characterLayer;
     let recentClicks = [];
     let lastFighterAt = 0;
     let lastMissileAt = 0;
@@ -95,7 +97,12 @@
       cleanupAfterAnimation(fighter, 2500);
     }
 
-    function spawnMissileUnit({ offsetX = 0, offsetY = 0, scale = 1 } = {}) {
+    function spawnMissileUnit(options) {
+      const resolvedOptions = options || {};
+      const offsetX = resolvedOptions.offsetX || 0;
+      const offsetY = resolvedOptions.offsetY || 0;
+      const scale =
+        resolvedOptions.scale === undefined ? 1 : resolvedOptions.scale;
       const missile = document.createElement("img");
 
       missile.src = MISSILE_IMAGE_SRC;
