@@ -1,13 +1,21 @@
 const { spawn } = require("node:child_process");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
 
 const PORT = 3211;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 
-function startServer() {
+function createTempDbPath() {
+  return path.join(fs.mkdtempSync(path.join(os.tmpdir(), "cookie-clicker-game-e2e-")), "game.sqlite");
+}
+
+function startServer(dbPath) {
   return new Promise((resolve, reject) => {
     const server = spawn("node", ["src/server.js"], {
       env: {
         ...process.env,
+        DB_PATH: dbPath,
         PORT: String(PORT)
       },
       stdio: ["ignore", "pipe", "pipe"]
@@ -38,15 +46,23 @@ function startServer() {
   });
 }
 
+function stopServer(server) {
+  return new Promise((resolve) => {
+    server.once("exit", resolve);
+    server.kill();
+  });
+}
+
 describe("cookie qui click", () => {
+  const dbPath = createTempDbPath();
   let server;
 
   beforeAll(async () => {
-    server = await startServer();
+    server = await startServer(dbPath);
   });
 
-  afterAll(() => {
-    server.kill();
+  afterAll(async () => {
+    await stopServer(server);
   });
 
   async function register(email, password = "Password123!") {
@@ -76,7 +92,10 @@ describe("cookie qui click", () => {
     const loginResponse = await login(email);
     const session = await loginResponse.json();
 
-    return session.token;
+    return {
+      email,
+      token: session.token
+    };
   }
 
   async function getGameState(token) {
@@ -98,7 +117,7 @@ describe("cookie qui click", () => {
 
   it("E2E 1 - incremente le compteur d'un cookie apres un clic", async () => {
     // Given : un utilisateur est connecte et arrive sur la page du jeu avec 0 cookie
-    const token = await createAuthenticatedUser();
+    const { token } = await createAuthenticatedUser();
     const initialResponse = await getGameState(token);
     expect(initialResponse.status).toBe(200);
     const initialState = await initialResponse.json();
@@ -115,7 +134,7 @@ describe("cookie qui click", () => {
 
   it("E2E 2 - incremente le compteur de 1 cookie a chaque clic", async () => {
     // Given : un utilisateur est connecte et arrive sur la page du jeu avec 0 cookie
-    const token = await createAuthenticatedUser();
+    const { token } = await createAuthenticatedUser();
 
     // When : il clique plusieurs fois sur le cookie central
     const firstClick = await clickCookie(token);
@@ -133,7 +152,7 @@ describe("cookie qui click", () => {
 
   it("E2E 3 - demande l'animation du personnage au clic", async () => {
     // Given : un utilisateur est connecte et arrive sur la page du jeu
-    const token = await createAuthenticatedUser();
+    const { token } = await createAuthenticatedUser();
 
     // When : il clique sur le cookie central
     const clickResponse = await clickCookie(token);
@@ -146,7 +165,7 @@ describe("cookie qui click", () => {
 
   it("E2E 4 - affiche les trump dollars et les statistiques du joueur", async () => {
     // Given : un utilisateur est connecte et possede des statistiques de progression
-    const token = await createAuthenticatedUser();
+    const { token } = await createAuthenticatedUser();
     await clickCookie(token);
     await clickCookie(token);
 
@@ -168,7 +187,7 @@ describe("cookie qui click", () => {
 
   it("E2E 5 - recharge le compteur avec les statistiques stockees en base", async () => {
     // Given : un utilisateur connecte a gagne des cookies en cliquant sur le cookie
-    const token = await createAuthenticatedUser();
+    const { token } = await createAuthenticatedUser();
     await clickCookie(token);
     await clickCookie(token);
     await clickCookie(token);
@@ -179,6 +198,27 @@ describe("cookie qui click", () => {
     const body = await stateAfterRefresh.json();
 
     // Then : le compteur est recharge avec les statistiques stockees en base
+    expect(body.cookies).toBe(3);
+  });
+
+  it("E2E 6 - conserve les trump dollars apres redemarrage du serveur", async () => {
+    // Given : un utilisateur connecte a gagne des trump dollars
+    const { email, token } = await createAuthenticatedUser();
+    await clickCookie(token);
+    await clickCookie(token);
+    await clickCookie(token);
+
+    // When : le serveur redemarre et l'utilisateur se reconnecte
+    await stopServer(server);
+    server = await startServer(dbPath);
+    const loginResponse = await login(email);
+    const { token: newToken } = await loginResponse.json();
+    const stateAfterRestart = await getGameState(newToken);
+    const body = await stateAfterRestart.json();
+
+    // Then : les trump dollars sont recharges depuis SQLite
+    expect(loginResponse.status).toBe(200);
+    expect(stateAfterRestart.status).toBe(200);
     expect(body.cookies).toBe(3);
   });
 });

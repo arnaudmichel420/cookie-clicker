@@ -5,7 +5,7 @@ const { createSqliteUserRepository } = require("./repositories/sqliteUserReposit
 const { createAuthService } = require("./services/authService");
 const { createPasswordService } = require("./services/passwordService");
 const { createTokenService } = require("./services/tokenService");
-const { createInMemorySaveRepository } = require("./repositories/inMemorySaveRepository");
+const { createSqliteSaveRepository } = require("./repositories/sqliteSaveRepository");
 const { createGameService } = require("./services/gameService");
 const { createAuthRouter } = require("./routes/authRoutes");
 const { createGameRouter } = require("./routes/gameRoutes");
@@ -23,7 +23,7 @@ function createApp() {
     tokenService
   });
   const gameService = createGameService({
-    saveRepository: createInMemorySaveRepository()
+    saveRepository: createSqliteSaveRepository(getDbPath())
   });
 
   app.set("view engine", "ejs");
