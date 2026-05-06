@@ -15,15 +15,14 @@ dotenv.config();
 
 function createApp() {
   const app = express();
-  const userRepository = createSqliteUserRepository(getDbPath());
-  const tokenService = createTokenService();
+  const dbPath = getDbPath();
   const authService = createAuthService({
-    userRepository,
+    userRepository: createSqliteUserRepository(dbPath),
     passwordService: createPasswordService(),
-    tokenService
+    tokenService: createTokenService()
   });
   const gameService = createGameService({
-    saveRepository: createSqliteSaveRepository(getDbPath())
+    saveRepository: createSqliteSaveRepository(dbPath)
   });
 
   app.set("view engine", "ejs");
