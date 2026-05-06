@@ -8,6 +8,7 @@ function createGameRouter({ authService, gameService }) {
   router.get("/", gameController.page);
   router.get("/game/state", gameController.state);
   router.post("/game/click", gameController.click);
+  router.post("/game/upgrades/:upgradeKey", gameController.purchaseUpgrade);
 
   return router;
 }

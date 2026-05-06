@@ -22,11 +22,14 @@ window.AUTH_MESSAGES = {
 
 window.GAME_ROUTES = {
   click: "/game/click",
-  state: "/game/state"
+  state: "/game/state",
+  upgrade: "/game/upgrades"
 };
 
 window.GAME_MESSAGES = {
   clickError: "Clic refusé.",
   missingSession: "Connectez-vous pour jouer.",
-  sessionExpired: "Session expirée."
+  purchaseError: "Achat refusé.",
+  sessionExpired: "Session expirée.",
+  upgradePurchased: "Upgrade acheté."
 };

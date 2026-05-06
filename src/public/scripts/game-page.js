@@ -2,9 +2,14 @@
   const cookieButton = document.getElementById("cookie-button");
   const cookieCount = document.getElementById("cookie-count");
   const cookiesPerSecond = document.getElementById("cookies-per-second");
+  const cookiesPerClick = document.getElementById("cookies-per-click");
+  const upgradeCount = document.getElementById("upgrade-count");
   const feedback = document.getElementById("game-feedback");
   const gameShell = document.querySelector(".game-shell");
+  const shopClose = document.getElementById("shop-close");
   const shopToggle = document.getElementById("shop-toggle");
+  const shopFilters = Array.from(document.querySelectorAll("[data-upgrade-filter]"));
+  const upgradeCards = Array.from(document.querySelectorAll("[data-upgrade-key]"));
   const frames = [
     document.getElementById("trump-frame-a"),
     document.getElementById("trump-frame-b")
@@ -13,21 +18,79 @@
     button: cookieButton,
     frames
   });
+  let stateRefreshHandle = null;
+  let activeFilter = null;
 
   function setFeedback(message, state = "info") {
     feedback.textContent = message;
     feedback.dataset.state = state;
   }
 
+  function renderUpgradeCard(stats, card) {
+    const upgrade = stats.upgrades.find(
+      (candidate) => candidate.key === card.dataset.upgradeKey
+    );
+
+    if (!upgrade) {
+      return;
+    }
+
+    const ownedLabel = card.querySelector("[data-upgrade-owned]");
+    const priceLabel = card.querySelector("[data-upgrade-price-label]");
+    const buyButton = card.querySelector("[data-upgrade-buy]");
+    const canAfford = stats.cookies >= upgrade.currentPrice;
+
+    ownedLabel.textContent = upgrade.owned;
+    priceLabel.textContent = `$${upgrade.currentPrice}`;
+    buyButton.disabled = !canAfford;
+    buyButton.dataset.upgradePrice = String(upgrade.currentPrice);
+  }
+
   function renderStats(data) {
     cookieCount.textContent = `$${data.cookies}`;
     cookiesPerSecond.textContent = data.cookiesPerSecond;
-    setFeedback("");
+    cookiesPerClick.textContent = data.cookiesPerClick;
+    upgradeCount.textContent = data.upgradeCount;
+    upgradeCards.forEach((card) => renderUpgradeCard(data, card));
+  }
+
+  function applyUpgradeFilter(nextFilter = null) {
+    activeFilter = nextFilter;
+
+    for (const filterButton of shopFilters) {
+      filterButton.classList.toggle(
+        "is-active",
+        nextFilter !== null && filterButton.dataset.upgradeFilter === nextFilter
+      );
+    }
+
+    for (const card of upgradeCards) {
+      const shouldShow =
+        nextFilter === null || card.dataset.upgradeFilterKind === nextFilter;
+      card.hidden = !shouldShow;
+    }
+  }
+
+  function setShopCollapsed(isCollapsed) {
+    gameShell.classList.toggle("is-shop-collapsed", isCollapsed);
+    shopToggle.setAttribute(
+      "aria-label",
+      isCollapsed ? "Ouvrir la boutique" : "Rétracter la boutique"
+    );
   }
 
   function disableGame(message) {
     setFeedback(message, "error");
     cookieButton.disabled = true;
+
+    for (const card of upgradeCards) {
+      const buyButton = card.querySelector("[data-upgrade-buy]");
+      buyButton.disabled = true;
+    }
+
+    if (stateRefreshHandle) {
+      window.clearInterval(stateRefreshHandle);
+    }
   }
 
   function handleGameError(response, data, fallbackMessage) {
@@ -57,20 +120,57 @@
     }
 
     renderStats(data);
+    setFeedback("");
 
     if (data.shouldAnimate) {
       trumpCharacter.morph();
     }
   }
 
-  cookieButton.addEventListener("click", clickCookie);
-  shopToggle.addEventListener("click", () => {
-    const isCollapsed = gameShell.classList.toggle("is-shop-collapsed");
+  async function purchaseUpgrade(upgradeKey) {
+    const { response, data } = await window.gameClient.purchaseUpgrade(upgradeKey);
 
-    shopToggle.setAttribute(
-      "aria-label",
-      isCollapsed ? "Ouvrir la boutique" : "Rétracter la boutique"
-    );
+    if (!response.ok) {
+      setFeedback(data.error ?? window.GAME_MESSAGES.purchaseError, "error");
+      return;
+    }
+
+    renderStats(data);
+    setFeedback(window.GAME_MESSAGES.upgradePurchased, "success");
+  }
+
+  cookieButton.addEventListener("click", clickCookie);
+
+  for (const card of upgradeCards) {
+    card.querySelector("[data-upgrade-buy]").addEventListener("click", () => {
+      purchaseUpgrade(card.dataset.upgradeKey);
+    });
+  }
+
+  for (const filterButton of shopFilters) {
+    filterButton.addEventListener("click", () => {
+      applyUpgradeFilter(filterButton.dataset.upgradeFilter);
+      setShopCollapsed(false);
+    });
+  }
+
+  shopToggle.addEventListener("click", () => {
+    const isCollapsed = gameShell.classList.contains("is-shop-collapsed");
+
+    if (isCollapsed) {
+      setShopCollapsed(false);
+      applyUpgradeFilter(null);
+      return;
+    }
+
+    setShopCollapsed(true);
   });
+
+  shopClose.addEventListener("click", () => {
+    setShopCollapsed(true);
+  });
+
+  applyUpgradeFilter(activeFilter);
   requestGameState();
+  stateRefreshHandle = window.setInterval(requestGameState, 1000);
 })();
