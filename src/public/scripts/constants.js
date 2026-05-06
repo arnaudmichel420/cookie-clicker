@@ -19,3 +19,14 @@ window.AUTH_MESSAGES = {
   sessionRestored: "Session restaurée avec succès.",
   logoutSuccess: "Déconnexion réussie. Redirection vers la connexion."
 };
+
+window.GAME_ROUTES = {
+  click: "/game/click",
+  state: "/game/state"
+};
+
+window.GAME_MESSAGES = {
+  clickError: "Clic refusé.",
+  missingSession: "Connectez-vous pour jouer.",
+  sessionExpired: "Session expirée."
+};

@@ -1,9 +1,4 @@
 (function initializeGamePage() {
-  const trumpImages = [
-    "/images/trump/trump-1%202.webp",
-    "/images/trump/trump-2%202.webp",
-    "/images/trump/trump-3%202.webp"
-  ];
   const cookieButton = document.getElementById("cookie-button");
   const cookieCount = document.getElementById("cookie-count");
   const cookiesPerSecond = document.getElementById("cookies-per-second");
@@ -14,95 +9,57 @@
     document.getElementById("trump-frame-a"),
     document.getElementById("trump-frame-b")
   ];
-  let imageIndex = 0;
-  let activeFrameIndex = 0;
+  const trumpCharacter = window.createTrumpCharacter({
+    button: cookieButton,
+    frames
+  });
 
   function setFeedback(message, state = "info") {
     feedback.textContent = message;
     feedback.dataset.state = state;
   }
 
-  function getRandomMotion() {
-    const rotation = Math.round((Math.random() * 18 - 9) * 10) / 10;
-    const scale = Math.round((0.94 + Math.random() * 0.16) * 100) / 100;
-
-    return {
-      rotation,
-      scale
-    };
+  function renderStats(data) {
+    cookieCount.textContent = `$${data.cookies}`;
+    cookiesPerSecond.textContent = data.cookiesPerSecond;
+    setFeedback("");
   }
 
-  function morphCharacter() {
-    const nextFrameIndex = activeFrameIndex === 0 ? 1 : 0;
-    const activeFrame = frames[activeFrameIndex];
-    const nextFrame = frames[nextFrameIndex];
-    const motion = getRandomMotion();
+  function disableGame(message) {
+    setFeedback(message, "error");
+    cookieButton.disabled = true;
+  }
 
-    imageIndex = (imageIndex + 1) % trumpImages.length;
-    nextFrame.src = trumpImages[imageIndex];
-    nextFrame.style.setProperty("--trump-rotation", `${motion.rotation}deg`);
-    nextFrame.style.setProperty("--trump-scale", motion.scale);
-    nextFrame.classList.add("trump-frame-active");
-    activeFrame.classList.remove("trump-frame-active");
-    cookieButton.classList.remove("is-clicking");
-    void cookieButton.offsetWidth;
-    cookieButton.classList.add("is-clicking");
-    activeFrameIndex = nextFrameIndex;
+  function handleGameError(response, data, fallbackMessage) {
+    if (!response.ok) {
+      disableGame(data.error ?? fallbackMessage);
+      return true;
+    }
+
+    return false;
   }
 
   async function requestGameState() {
-    const token = window.authClient.getToken();
+    const { response, data } = await window.gameClient.getState();
 
-    if (!token) {
-      setFeedback("Connectez-vous pour jouer.", "error");
-      cookieButton.disabled = true;
+    if (handleGameError(response, data, window.GAME_MESSAGES.sessionExpired)) {
       return;
     }
 
-    const { response, data } = await window.authClient.requestJson("/game/state", {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    if (!response.ok) {
-      setFeedback(data.error ?? "Session expirée.", "error");
-      cookieButton.disabled = true;
-      return;
-    }
-
-    cookieCount.textContent = `$${data.cookies}`;
-    cookiesPerSecond.textContent = data.cookiesPerSecond;
-    setFeedback("");
+    renderStats(data);
   }
 
   async function clickCookie() {
-    const token = window.authClient.getToken();
+    const { response, data } = await window.gameClient.clickCookie();
 
-    if (!token) {
-      setFeedback("Connectez-vous pour jouer.", "error");
-      cookieButton.disabled = true;
+    if (handleGameError(response, data, window.GAME_MESSAGES.clickError)) {
       return;
     }
 
-    const { response, data } = await window.authClient.requestJson("/game/click", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    if (!response.ok) {
-      setFeedback(data.error ?? "Clic refusé.", "error");
-      return;
-    }
-
-    cookieCount.textContent = `$${data.cookies}`;
-    cookiesPerSecond.textContent = data.cookiesPerSecond;
-    setFeedback("");
+    renderStats(data);
 
     if (data.shouldAnimate) {
-      morphCharacter();
+      trumpCharacter.morph();
     }
   }
 
