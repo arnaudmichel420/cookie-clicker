@@ -5,6 +5,8 @@
   const cookiesPerClick = document.getElementById("cookies-per-click");
   const upgradeCount = document.getElementById("upgrade-count");
   const feedback = document.getElementById("game-feedback");
+  const effectsLayer = document.getElementById("effects-layer");
+  const characterEffects = document.getElementById("character-effects");
   const gameShell = document.querySelector(".game-shell");
   const shopClose = document.getElementById("shop-close");
   const shopToggle = document.getElementById("shop-toggle");
@@ -16,7 +18,11 @@
   ];
   const trumpCharacter = window.createTrumpCharacter({
     button: cookieButton,
-    frames
+    frames: frames
+  });
+  const gameEffects = window.createGameEffects({
+    layer: effectsLayer,
+    characterLayer: characterEffects
   });
   const gameSoundEffects = window.createGameSoundEffects({
     Audio: window.Audio
@@ -24,9 +30,10 @@
   let stateRefreshHandle = null;
   let activeFilter = null;
 
-  function setFeedback(message, state = "info") {
+  function setFeedback(message, state) {
+    const nextState = state === undefined ? "info" : state;
     feedback.textContent = message;
-    feedback.dataset.state = state;
+    feedback.dataset.state = nextState;
   }
 
   function renderUpgradeCard(stats, card) {
@@ -57,19 +64,20 @@
     upgradeCards.forEach((card) => renderUpgradeCard(data, card));
   }
 
-  function applyUpgradeFilter(nextFilter = null) {
-    activeFilter = nextFilter;
+  function applyUpgradeFilter(nextFilter) {
+    const resolvedFilter = nextFilter === undefined ? null : nextFilter;
+    activeFilter = resolvedFilter;
 
     for (const filterButton of shopFilters) {
       filterButton.classList.toggle(
         "is-active",
-        nextFilter !== null && filterButton.dataset.upgradeFilter === nextFilter
+        resolvedFilter !== null && filterButton.dataset.upgradeFilter === resolvedFilter
       );
     }
 
     for (const card of upgradeCards) {
       const shouldShow =
-        nextFilter === null || card.dataset.upgradeFilterKind === nextFilter;
+        resolvedFilter === null || card.dataset.upgradeFilterKind === resolvedFilter;
       card.hidden = !shouldShow;
     }
   }
@@ -98,7 +106,7 @@
 
   function handleGameError(response, data, fallbackMessage) {
     if (!response.ok) {
-      disableGame(data.error ?? fallbackMessage);
+      disableGame(data.error || fallbackMessage);
       return true;
     }
 
@@ -130,6 +138,7 @@
 
     if (data.shouldAnimate) {
       trumpCharacter.morph();
+      gameEffects.triggerClickEffects();
     }
   }
 
@@ -139,12 +148,13 @@
     const { response, data } = await window.gameClient.purchaseUpgrade(upgradeKey);
 
     if (!response.ok) {
-      setFeedback(data.error ?? window.GAME_MESSAGES.purchaseError, "error");
+      setFeedback(data.error || window.GAME_MESSAGES.purchaseError, "error");
       return;
     }
 
     renderStats(data);
     setFeedback(window.GAME_MESSAGES.upgradePurchased, "success");
+    gameEffects.triggerPurchaseEffects(data.purchaseEffect);
     gameSoundEffects.playUpgradeSound();
   }
 

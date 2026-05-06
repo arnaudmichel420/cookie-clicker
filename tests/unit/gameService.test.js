@@ -178,14 +178,14 @@ describe("gameService - cas d'erreur", () => {
     expect(saveRepository.save).not.toHaveBeenCalled();
   });
 
-  it("TU 10 - refuse les clics au dela de 10 clics par seconde", async () => {
+  it("TU 10 - refuse les clics au dela de 20 clics par seconde", async () => {
     const saveRepository = createSaveRepository([createStats({ cookies: 10 })]);
     const rateLimiter = {
       canClick: vi.fn(() => false)
     };
     const gameService = createGameServiceForTest({ saveRepository, rateLimiter });
 
-    await expect(gameService.clickCookie(1)).rejects.toThrow("Limite de 10 clics par seconde dépassée");
+    await expect(gameService.clickCookie(1)).rejects.toThrow("Limite de 20 clics par seconde dépassée");
   });
 
   it("TU 11 - renvoie une erreur metier quand la sauvegarde echoue", async () => {

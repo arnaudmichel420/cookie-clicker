@@ -376,4 +376,76 @@ describe("cookie qui click", () => {
     expect(body.cookiesPerClick).toBe(2);
     expect(body.upgradeLevels.gold).toBe(1);
   });
+
+  it(
+    "E2E Effets 1 - Effets visuels lors de l'achat d'une upgrade",
+    async () => {
+      const { token } = await createAuthenticatedUser();
+
+      await earnCookies(token, 70);
+
+      const pickupResponse = await purchaseUpgrade(token, "pickup");
+      const pickupBody = await pickupResponse.json();
+      const secondPickupResponse = await purchaseUpgrade(token, "pickup");
+      const secondPickupBody = await secondPickupResponse.json();
+
+      expect(pickupResponse.status).toBe(200);
+      expect(secondPickupResponse.status).toBe(200);
+      expect(pickupBody.purchaseEffect).toMatchObject({
+        kind: "upgrade-purchase",
+        visual: true,
+        upgradeKey: "pickup"
+      });
+      expect(secondPickupBody.purchaseEffect).toMatchObject({
+        kind: "upgrade-purchase",
+        visual: true,
+        upgradeKey: "pickup"
+      });
+      expect(secondPickupBody.purchaseEffect.intensity).toBeGreaterThan(
+        pickupBody.purchaseEffect.intensity
+      );
+    },
+    15000
+  );
+
+  it("E2E Effets 2 - Effet visuel lors du clic sur Trump", async () => {
+    const { token } = await createAuthenticatedUser();
+
+    const clickResponse = await clickCookie(token);
+    const clickBody = await clickResponse.json();
+
+    expect(clickResponse.status).toBe(200);
+    expect(clickBody.shouldAnimate).toBe(true);
+    expect(clickBody.clickEffect).toMatchObject({
+      kind: "trump-click",
+      visual: true
+    });
+  });
+
+  it("E2E Effets 3 - Cumul des effets sonores lors de spams de clics", async () => {
+    const { token } = await createAuthenticatedUser();
+
+    const firstClickResponse = await clickCookie(token);
+    const secondClickResponse = await clickCookie(token);
+    const thirdClickResponse = await clickCookie(token);
+    const firstClickBody = await firstClickResponse.json();
+    const secondClickBody = await secondClickResponse.json();
+    const thirdClickBody = await thirdClickResponse.json();
+
+    expect(firstClickResponse.status).toBe(200);
+    expect(secondClickResponse.status).toBe(200);
+    expect(thirdClickResponse.status).toBe(200);
+    expect(firstClickBody.clickEffect.sound).toEqual({
+      key: "trump-click",
+      stackable: true
+    });
+    expect(secondClickBody.clickEffect.sound).toEqual({
+      key: "trump-click",
+      stackable: true
+    });
+    expect(thirdClickBody.clickEffect.sound).toEqual({
+      key: "trump-click",
+      stackable: true
+    });
+  });
 });

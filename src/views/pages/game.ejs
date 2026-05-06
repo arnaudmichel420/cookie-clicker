@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="/styles/pages/game.css" />
   </head>
   <body class="page-game">
+    <div class="effects-layer" id="effects-layer" aria-hidden="true"></div>
     <main class="game-shell is-shop-collapsed" data-authenticated="<%= isAuthenticated %>">
       <section class="game-board" aria-labelledby="game-title">
         <p class="game-brand">Sovereign Clicker</p>
@@ -28,6 +29,7 @@
           aria-label="Gagner un trump dollar"
         >
           <span class="cookie-halo" aria-hidden="true"></span>
+          <span class="character-effects" id="character-effects" aria-hidden="true"></span>
           <span class="character-stage" aria-hidden="true">
             <img
               class="trump-frame trump-frame-active"
@@ -157,6 +159,7 @@
     <script src="/scripts/constants.js"></script>
     <script src="/scripts/auth-client.js"></script>
     <script src="/scripts/game-client.js"></script>
+    <script src="/scripts/game-effects.js"></script>
     <script src="/scripts/trump-character.js"></script>
     <script src="/scripts/sound-effects.js"></script>
     <script src="/scripts/game-page.js"></script>
