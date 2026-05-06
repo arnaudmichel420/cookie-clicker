@@ -1,6 +1,16 @@
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 const Database = require("better-sqlite3");
+
+const DEFAULT_USER = {
+  email: "JohnDOE1@test.com",
+  password: "JohnDoe1234*"
+};
+
+function hashPassword(password) {
+  return crypto.createHash("sha256").update(password).digest("hex");
+}
 
 function mapUser(row) {
   if (!row) {
@@ -33,6 +43,10 @@ function createSqliteUserRepository(dbPath) {
   const statements = {
     create: db.prepare(`
       INSERT INTO users (email, password_hash)
+      VALUES (@email, @passwordHash)
+    `),
+    seedDefaultUser: db.prepare(`
+      INSERT OR IGNORE INTO users (email, password_hash)
       VALUES (@email, @passwordHash)
     `),
     findByEmail: db.prepare(`
@@ -80,6 +94,18 @@ function createSqliteUserRepository(dbPath) {
     async saveToken(userId, token) {
       statements.saveToken.run(token, userId);
     },
+    async seedDefaultUser() {
+      const result = statements.seedDefaultUser.run({
+        email: DEFAULT_USER.email,
+        passwordHash: hashPassword(DEFAULT_USER.password)
+      });
+      const user = await this.findByEmail(DEFAULT_USER.email);
+
+      return {
+        created: result.changes > 0,
+        user
+      };
+    },
     close() {
       db.close();
     }
@@ -87,5 +113,6 @@ function createSqliteUserRepository(dbPath) {
 }
 
 module.exports = {
+  DEFAULT_USER,
   createSqliteUserRepository
 };

@@ -1,13 +1,54 @@
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { createSqliteUserRepository } = require("../../src/repositories/sqliteUserRepository");
+const {
+  DEFAULT_USER,
+  createSqliteUserRepository
+} = require("../../src/repositories/sqliteUserRepository");
 
 function createTempDbPath() {
   return path.join(fs.mkdtempSync(path.join(os.tmpdir(), "cookie-clicker-")), "game.sqlite");
 }
 
 describe("sqliteUserRepository", () => {
+  it("seed un utilisateur par defaut sur demande", async () => {
+    const dbPath = createTempDbPath();
+    const repository = createSqliteUserRepository(dbPath);
+
+    const result = await repository.seedDefaultUser();
+    const defaultUser = await repository.findByEmail(DEFAULT_USER.email);
+
+    expect(result.created).toBe(true);
+    expect(defaultUser.email).toBe("JohnDOE1@test.com");
+    expect(defaultUser.passwordHash).toEqual(expect.any(String));
+    expect(defaultUser.passwordHash).not.toBe("JohnDoe1234*");
+    expect(defaultUser.token).toBeNull();
+
+    repository.close();
+  });
+
+  it("ne duplique pas l'utilisateur par defaut a la reouverture de la base", async () => {
+    const dbPath = createTempDbPath();
+    const firstRepository = createSqliteUserRepository(dbPath);
+    await firstRepository.seedDefaultUser();
+    firstRepository.close();
+
+    const secondRepository = createSqliteUserRepository(dbPath);
+    const result = await secondRepository.seedDefaultUser();
+    const defaultUser = await secondRepository.findByEmail(DEFAULT_USER.email);
+
+    await expect(
+      secondRepository.create({
+        email: DEFAULT_USER.email,
+        passwordHash: "another-password"
+      })
+    ).rejects.toThrow("UNIQUE constraint failed: users.email");
+    expect(result.created).toBe(false);
+    expect(defaultUser.email).toBe(DEFAULT_USER.email);
+
+    secondRepository.close();
+  });
+
   it("persiste les utilisateurs dans SQLite et les retrouve apres reouverture", async () => {
     const dbPath = createTempDbPath();
     const firstRepository = createSqliteUserRepository(dbPath);
