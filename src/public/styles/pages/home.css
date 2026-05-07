@@ -3,12 +3,12 @@
     display: grid;
     align-items: center;
     justify-content: center;
-    padding: 32px;
+    padding: clamp(20px, 5vw, 48px);
   }
 
   @media (max-width: 720px) {
     body.page-home h1 {
-      font-size: clamp(2.2rem, 10vw, 3.2rem);
+      font-size: clamp(2.1rem, 12vw, 3.2rem);
     }
 
     body.page-home .page-shell {
