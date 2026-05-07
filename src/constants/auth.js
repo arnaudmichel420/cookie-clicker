@@ -7,8 +7,14 @@ const AUTH_ERRORS = {
 };
 
 const AUTH_TOKEN = {
-  byteLength: 24,
-  prefix: "Bearer "
+  expiresInSeconds: 24 * 60 * 60,
+  issuer: "cookie-clicker",
+  prefix: "Bearer ",
+  privateKey: process.env.JWT_PRIVATE_KEY || "",
+  privateKeyPassphrase: process.env.JWT_PRIVATE_KEY_PASSPHRASE || "",
+  privateKeyPath: process.env.JWT_PRIVATE_KEY_PATH || "./jwt-private.pem",
+  publicKey: process.env.JWT_PUBLIC_KEY || "",
+  publicKeyPath: process.env.JWT_PUBLIC_KEY_PATH || "./jwt-public.pem"
 };
 
 const HTTP_STATUS = {

@@ -1,5 +1,19 @@
 const { HTTP_STATUS } = require("../constants/auth");
 const { readAuthToken } = require("../utils/auth");
+const { formatAmount } = require("../utils/cookieMath");
+
+function formatGameStats(stats) {
+  return {
+    ...stats,
+    formattedCookies: formatAmount(stats.cookies),
+    formattedCookiesPerClick: formatAmount(stats.cookiesPerClick),
+    formattedCookiesPerSecond: formatAmount(stats.cookiesPerSecond),
+    upgrades: stats.upgrades.map((upgrade) => ({
+      ...upgrade,
+      formattedCurrentPrice: formatAmount(upgrade.currentPrice)
+    }))
+  };
+}
 
 function createGameController({ authService, gameService }) {
   async function resolveUser(req, res) {
@@ -29,7 +43,7 @@ function createGameController({ authService, gameService }) {
       const stats = await gameService.getStats(session.user.id);
 
       return res.render("pages/game", {
-        ...stats,
+        ...formatGameStats(stats),
         isAuthenticated: true,
         title: "Sovereign Clicker"
       });

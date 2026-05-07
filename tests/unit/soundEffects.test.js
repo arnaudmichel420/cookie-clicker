@@ -45,6 +45,10 @@ function createSoundEffects({ Audio, now, random, soundEffects } = {}) {
     Audio,
     SOUND_EFFECTS: soundEffects ?? {
       background: "/sounds/usa-anthem.mp3",
+      animation: {
+        fighter: "/sounds/fighter-jet.mp3",
+        missile: "/sounds/missile.mp3"
+      },
       click: ["/sounds/click/first.mp3", "/sounds/click/second.mp3"],
       upgrade: ["/sounds/upgrades/first.mp3", "/sounds/upgrades/second.mp3"]
     }
@@ -155,7 +159,7 @@ describe("soundEffects - cas nominaux", () => {
     expect(instances).toHaveLength(1);
     expect(instances[0].source).toBe("/sounds/usa-anthem.mp3");
     expect(instances[0].loop).toBe(true);
-    expect(instances[0].volume).toBe(0.09);
+    expect(instances[0].volume).toBe(0.04);
     expect(instances[0].play).toHaveBeenCalledTimes(1);
   });
 
@@ -169,16 +173,30 @@ describe("soundEffects - cas nominaux", () => {
     expect(instances).toHaveLength(1);
     expect(instances[0].play).toHaveBeenCalledTimes(1);
   });
+
+  it("TU 7 - applique un volume dedie aux sons d'avion et de missile", async () => {
+    const { AudioMock, instances } = createAudioMock();
+    const soundEffects = createSoundEffects({ Audio: AudioMock });
+
+    await soundEffects.playFighterSound();
+    await soundEffects.playMissileSound();
+
+    expect(instances).toHaveLength(2);
+    expect(instances[0].source).toBe("/sounds/fighter-jet.mp3");
+    expect(instances[0].volume).toBe(0.45);
+    expect(instances[1].source).toBe("/sounds/missile.mp3");
+    expect(instances[1].volume).toBe(0.05);
+  });
 });
 
 describe("soundEffects - cas d'erreur", () => {
-  it("TU 7 - ne bloque pas le jeu si l'API Audio est indisponible", async () => {
+  it("TU 8 - ne bloque pas le jeu si l'API Audio est indisponible", async () => {
     const soundEffects = createSoundEffects({ Audio: undefined });
 
     await expect(soundEffects.playClickSound()).resolves.toBe(false);
   });
 
-  it("TU 8 - ignore une erreur de lecture audio", async () => {
+  it("TU 9 - ignore une erreur de lecture audio", async () => {
     const { AudioMock } = createAudioMock(() => Promise.reject(new Error("Lecture refusee")));
     const soundEffects = createSoundEffects({ Audio: AudioMock });
 
@@ -187,7 +205,7 @@ describe("soundEffects - cas d'erreur", () => {
 });
 
 describe("soundEffects - cas limites", () => {
-  it("TU 9 - ne lance rien si aucune source sonore n'est configuree", async () => {
+  it("TU 10 - ne lance rien si aucune source sonore n'est configuree", async () => {
     const { AudioMock, instances } = createAudioMock();
     const soundEffects = createSoundEffects({
       Audio: AudioMock,
@@ -204,14 +222,16 @@ describe("soundEffects - cas limites", () => {
     expect(instances).toHaveLength(0);
   });
 
-  it("TU 10 - expose seulement les methodes audio explicites", () => {
+  it("TU 11 - expose seulement les methodes audio explicites", () => {
     const { AudioMock } = createAudioMock();
     const soundEffects = createSoundEffects({ Audio: AudioMock });
 
     expect(Object.keys(soundEffects)).toEqual([
       "playClickSound",
       "playUpgradeSound",
-      "startBackgroundMusic"
+      "startBackgroundMusic",
+      "playFighterSound",
+      "playMissileSound"
     ]);
   });
 });

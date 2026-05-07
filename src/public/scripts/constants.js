@@ -36,6 +36,10 @@ window.GAME_MESSAGES = {
 
 window.SOUND_EFFECTS = {
   background: "/sounds/usa-anthem.mp3",
+  animation: {
+    fighter: "/sounds/fighter-jet.mp3",
+    missile: "/sounds/missile.mp3"
+  },
   click: [
     "/sounds/click/ksjsbwuil-cash-register-1-513922.mp3",
     "/sounds/click/dragon-studio-cash-register-kaching-376867.mp3"
@@ -52,4 +56,38 @@ window.SOUND_EFFECTS = {
     "/sounds/upgrades/trump-hates-mosquitoes-audiotrimmer.mp3",
     "/sounds/upgrades/trump-mr-toughguy.mp3"
   ]
+};
+
+window.formatAmount = function formatAmount(value) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return "0";
+  }
+
+  const units = [
+    {
+      value: 1000000000000,
+      suffix: "T"
+    },
+    {
+      value: 1000000000,
+      suffix: "Md"
+    },
+    {
+      value: 1000000,
+      suffix: "M"
+    },
+    {
+      value: 1000,
+      suffix: "K"
+    }
+  ];
+  const unit = units.find((candidate) => value >= candidate.value);
+
+  if (!unit) {
+    return String(Math.floor(value));
+  }
+
+  const formatted = (value / unit.value).toFixed(1).replace(/\.0$/, "");
+
+  return `${formatted}${unit.suffix}`;
 };

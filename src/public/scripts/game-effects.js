@@ -17,6 +17,7 @@
   function createGameEffects(options) {
     const layer = options.layer;
     const characterLayer = options.characterLayer;
+    const sounds = options.sounds;
     let recentClicks = [];
     let lastFighterAt = 0;
     let lastMissileAt = 0;
@@ -100,6 +101,7 @@
       fighter.className = "effect-fighter";
       fighter.draggable = false;
       layer.append(fighter);
+      sounds?.playFighterSound();
       cleanupAfterAnimation(fighter, 2500);
     }
 
@@ -130,6 +132,7 @@
       }
 
       lastMissileAt = now;
+      sounds?.playMissileSound();
       spawnMissileUnit();
       spawnMissileUnit({
         offsetX: 46,

@@ -16,10 +16,9 @@
     <main class="game-shell is-shop-collapsed" data-authenticated="<%= isAuthenticated %>">
       <section class="game-board" aria-labelledby="game-title">
         <p class="game-brand">Sovereign Clicker</p>
-
         <div class="cookie-counter">
           <p class="eyebrow">Trump dollars</p>
-          <h1 id="game-title"><span id="cookie-count">$<%= cookies %></span></h1>
+          <h1 id="game-title"><span id="cookie-count">$<%= formattedCookies %></span></h1>
         </div>
 
         <button
@@ -52,11 +51,11 @@
           <dl class="stat-list">
             <div class="stat-card stat-card-green">
               <dt>Trump dollars par seconde</dt>
-              <dd><span id="cookies-per-second"><%= cookiesPerSecond %></span></dd>
+              <dd><span id="cookies-per-second"><%= formattedCookiesPerSecond %></span></dd>
             </div>
             <div class="stat-card stat-card-gold">
               <dt>Trump dollars par click</dt>
-              <dd><span id="cookies-per-click"><%= cookiesPerClick %></span></dd>
+              <dd><span id="cookies-per-click"><%= formattedCookiesPerClick %></span></dd>
             </div>
             <div class="stat-card stat-card-red">
               <dt>Nombre d'upgrades</dt>
@@ -76,35 +75,34 @@
         >
           <i class="ph ph-caret-right" aria-hidden="true"></i>
         </button>
-        <div class="shop-actions">
-          <button class="shop-toggle" id="shop-toggle" type="button" aria-label="Rétracter la boutique">
-            <i class="ph ph-storefront" aria-hidden="true"></i>
+        <div class="shop-actions" aria-label="Filtres boutique">
+          <button
+            class="shop-filter"
+            id="shop-filter-auto"
+            type="button"
+            data-upgrade-filter="auto-click"
+            aria-label="Afficher les améliorations automatiques"
+          >
+            <i class="ph ph-timer" aria-hidden="true"></i>
           </button>
-          <div class="shop-toolbar" aria-label="Filtres boutique">
-            <button
-              class="shop-filter"
-              id="shop-filter-auto"
-              type="button"
-              data-upgrade-filter="auto-click"
-              aria-label="Afficher les améliorations automatiques"
-            >
-              <i class="ph ph-timer" aria-hidden="true"></i>
-            </button>
-            <button
-              class="shop-filter"
-              id="shop-filter-click"
-              type="button"
-              data-upgrade-filter="boost-click"
-              aria-label="Afficher les boosts de clic"
-            >
-              <i class="ph ph-hand-tap" aria-hidden="true"></i>
-            </button>
-          </div>
+          <button
+            class="shop-filter"
+            id="shop-filter-click"
+            type="button"
+            data-upgrade-filter="boost-click"
+            aria-label="Afficher les boosts de clic"
+          >
+            <i class="ph ph-hand-tap" aria-hidden="true"></i>
+          </button>
         </div>
         <div class="shop-head">
           <p class="eyebrow">Upgrades</p>
           <h2>Améliorations</h2>
         </div>
+        <button class="shop-logout" id="logout-button" type="button" aria-label="Déconnexion">
+          <i class="ph ph-sign-out" aria-hidden="true"></i>
+          <span>Déconnexion</span>
+        </button>
         <div class="shop-list" id="shop-list">
           <% upgrades.forEach((upgrade) => { %>
             <article
@@ -148,7 +146,7 @@
                 data-upgrade-price="<%= upgrade.currentPrice %>"
               >
                 Acheter -
-                <span data-upgrade-price-label>$<%= upgrade.currentPrice %></span>
+                <span data-upgrade-price-label>$<%= upgrade.formattedCurrentPrice %></span>
               </button>
             </article>
           <% }) %>
@@ -157,6 +155,7 @@
     </main>
 
     <script src="/scripts/constants.js"></script>
+    <script src="/scripts/ui-helpers.js"></script>
     <script src="/scripts/auth-client.js"></script>
     <script src="/scripts/game-client.js"></script>
     <script src="/scripts/game-effects.js"></script>

@@ -85,6 +85,9 @@ function createSqliteUserRepository(dbPath) {
     async findByEmail(email) {
       return mapUser(statements.findByEmail.get(email));
     },
+    async findById(userId) {
+      return mapUser(statements.findById.get(userId));
+    },
     async findByToken(token) {
       return mapUser(statements.findByToken.get(token));
     },

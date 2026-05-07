@@ -1,5 +1,8 @@
 const express = require("express");
 const dotenv = require("dotenv");
+
+dotenv.config();
+
 const { getDbPath, getPublicPath, getViewsPath } = require("./config/appConfig");
 const { createSqliteUserRepository } = require("./repositories/sqliteUserRepository");
 const { createAuthService } = require("./services/authService");
@@ -10,8 +13,6 @@ const { createGameService } = require("./services/gameService");
 const { createAuthRouter } = require("./routes/authRoutes");
 const { createGameRouter } = require("./routes/gameRoutes");
 const { createPageRouter } = require("./routes/pageRoutes");
-
-dotenv.config();
 
 function createApp() {
   const app = express();
