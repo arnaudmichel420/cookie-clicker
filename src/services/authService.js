@@ -55,7 +55,6 @@ function createAuthService({
       }
 
       const token = await tokenService.generate(user);
-      await userRepository.saveToken(user.id, token);
 
       return {
         token,
@@ -66,8 +65,7 @@ function createAuthService({
       };
     },
 
-    async logout(userId, token) {
-      await userRepository.removeToken(userId);
+    async logout(_userId, token) {
       await tokenService.revoke(token);
     },
 
@@ -79,16 +77,16 @@ function createAuthService({
         };
       }
 
-      const verifiedToken = await tokenService.verify(token);
+      const payload = await tokenService.verify(token);
 
-      if (!verifiedToken) {
+      if (!payload) {
         return {
           clearToken: true,
           user: null
         };
       }
 
-      const user = await userRepository.findByToken(verifiedToken);
+      const user = await userRepository.findById(Number(payload.sub));
 
       if (!user) {
         return {

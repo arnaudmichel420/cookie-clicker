@@ -1,4 +1,5 @@
 const { spawn } = require("node:child_process");
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -6,17 +7,58 @@ const Database = require("better-sqlite3");
 
 const PORT = 3211;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
+const JWT_PASSPHRASE = "test-jwt-passphrase";
 
 function createTempDbPath() {
   return path.join(fs.mkdtempSync(path.join(os.tmpdir(), "cookie-clicker-game-e2e-")), "game.sqlite");
 }
 
+function createJwtKeyFiles(dbPath) {
+  const keyDir = path.dirname(dbPath);
+  const privateKeyPath = path.join(keyDir, "jwt-private.pem");
+  const publicKeyPath = path.join(keyDir, "jwt-public.pem");
+
+  if (fs.existsSync(privateKeyPath) && fs.existsSync(publicKeyPath)) {
+    return {
+      privateKeyPath,
+      publicKeyPath
+    };
+  }
+
+  const { privateKey, publicKey } = crypto.generateKeyPairSync("rsa", {
+    modulusLength: 2048,
+    privateKeyEncoding: {
+      type: "pkcs8",
+      format: "pem",
+      cipher: "aes-256-cbc",
+      passphrase: JWT_PASSPHRASE
+    },
+    publicKeyEncoding: {
+      type: "spki",
+      format: "pem"
+    }
+  });
+
+  fs.writeFileSync(privateKeyPath, privateKey);
+  fs.writeFileSync(publicKeyPath, publicKey);
+
+  return {
+    privateKeyPath,
+    publicKeyPath
+  };
+}
+
 function startServer(dbPath) {
+  const jwtKeys = createJwtKeyFiles(dbPath);
+
   return new Promise((resolve, reject) => {
     const server = spawn("node", ["src/server.js"], {
       env: {
         ...process.env,
         DB_PATH: dbPath,
+        JWT_PRIVATE_KEY_PASSPHRASE: JWT_PASSPHRASE,
+        JWT_PRIVATE_KEY_PATH: jwtKeys.privateKeyPath,
+        JWT_PUBLIC_KEY_PATH: jwtKeys.publicKeyPath,
         PORT: String(PORT)
       },
       stdio: ["ignore", "pipe", "pipe"]

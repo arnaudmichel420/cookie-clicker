@@ -6,3 +6,5 @@ npm-debug.log
 db
 coverage
 .DS_Store
+jwt-private.pem
+jwt-public.pem
