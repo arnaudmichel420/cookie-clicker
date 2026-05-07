@@ -4,6 +4,26 @@ function createAuthServiceForTest(options) {
   return createAuthService(options);
 }
 
+function decodeJwtPart(token, index) {
+  return JSON.parse(Buffer.from(token.split(".")[index], "base64url").toString("utf8"));
+}
+
+function createJwtKeyPair() {
+  const crypto = require("node:crypto");
+
+  return crypto.generateKeyPairSync("rsa", {
+    modulusLength: 2048,
+    privateKeyEncoding: {
+      type: "pkcs8",
+      format: "pem"
+    },
+    publicKeyEncoding: {
+      type: "spki",
+      format: "pem"
+    }
+  });
+}
+
 function createUserRepository(users = []) {
   const records = users.map((user) => ({ ...user }));
 
@@ -21,6 +41,9 @@ function createUserRepository(users = []) {
     }),
     findByEmail: vi.fn(async (email) => {
       return records.find((user) => user.email === email) ?? null;
+    }),
+    findById: vi.fn(async (userId) => {
+      return records.find((user) => user.id === userId) ?? null;
     }),
     findByToken: vi.fn(async (token) => {
       return records.find((user) => user.token === token) ?? null;
@@ -99,29 +122,38 @@ describe("authService - cas nominaux", () => {
       password: "Password123!"
     });
 
-    // Then : un token de connexion est genere et associe a l'utilisateur
+    // Then : un token de connexion est genere sans stockage serveur obligatoire
     expect(session.token).toBe("generated-token");
-    expect(userRepository.saveToken).toHaveBeenCalledWith(1, "generated-token");
+    expect(tokenService.generate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 1,
+        email: "john@gmail.com"
+      })
+    );
+    expect(userRepository.saveToken).not.toHaveBeenCalled();
   });
 
-  it("TU 3 - supprime le token quand l'utilisateur se deconnecte", async () => {
-    // Given : un utilisateur connecte avec un token actif
+  it("TU 3 - ne depend pas du stockage serveur quand l'utilisateur se deconnecte", async () => {
+    // Given : un utilisateur connecte avec un JWT stateless
     const userRepository = createUserRepository([createValidUser({ token: "valid-token" })]);
     const authService = createAuthServiceForTest({ userRepository });
 
     // When : l'utilisateur se deconnecte
     await authService.logout(1);
 
-    // Then : le token de connexion est supprime
-    expect(userRepository.removeToken).toHaveBeenCalledWith(1);
-    expect(userRepository.getById(1).token).toBeNull();
+    // Then : aucune suppression serveur n'est necessaire pour invalider une session stateless
+    expect(userRepository.removeToken).not.toHaveBeenCalled();
+    expect(userRepository.getById(1).token).toBe("valid-token");
   });
 
   it("TU 4 - conserve la session quand le token est valide", async () => {
     // Given : un utilisateur possede un token valide
     const userRepository = createUserRepository([createValidUser({ token: "valid-token" })]);
     const tokenService = {
-      verify: vi.fn(async () => "valid-token")
+      verify: vi.fn(async () => ({
+        sub: "1",
+        email: "john@gmail.com"
+      }))
     };
     const authService = createAuthServiceForTest({ userRepository, tokenService });
 
@@ -131,6 +163,7 @@ describe("authService - cas nominaux", () => {
     // Then : l'utilisateur reste connecte
     expect(session.clearToken).toBe(false);
     expect(session.user.email).toBe("john@gmail.com");
+    expect(userRepository.findById).toHaveBeenCalledWith(1);
   });
 
   it("TU 5 - invite a se connecter quand aucun token n'est fourni", async () => {
@@ -145,6 +178,135 @@ describe("authService - cas nominaux", () => {
       clearToken: false,
       user: null
     });
+  });
+});
+
+describe("tokenService JWT - cas nominaux", () => {
+  it("TU 15 - genere un JWT RS256 avec une expiration a 1 jour", async () => {
+    // Given : un service de token JWT avec une date courante fixe
+    const { createTokenService } = require("../../src/services/tokenService");
+    const { privateKey, publicKey } = createJwtKeyPair();
+    const tokenService = createTokenService({
+      privateKey,
+      publicKey,
+      now: () => 1000
+    });
+
+    // When : un token est genere pour l'utilisateur
+    const token = await tokenService.generate({
+      id: 42,
+      email: "jwt@gmail.com"
+    });
+    const header = decodeJwtPart(token, 0);
+    const payload = decodeJwtPart(token, 1);
+
+    // Then : le token est un JWT signe en RS256 et expire apres 24 heures
+    expect(token.split(".")).toHaveLength(3);
+    expect(header).toEqual({
+      alg: "RS256",
+      typ: "JWT"
+    });
+    expect(payload).toMatchObject({
+      sub: "42",
+      email: "jwt@gmail.com",
+      iss: "cookie-clicker",
+      iat: 1000,
+      exp: 87400
+    });
+    await expect(tokenService.verify(token)).resolves.toMatchObject({
+      sub: "42",
+      email: "jwt@gmail.com",
+      exp: 87400
+    });
+  });
+
+  it("TU 16 - signe un JWT avec une cle privee protegee par passphrase", async () => {
+    // Given : une paire de cles RSA dont la cle privee est chiffree
+    const crypto = require("node:crypto");
+    const { createTokenService } = require("../../src/services/tokenService");
+    const passphrase = "test-passphrase";
+    const { privateKey, publicKey } = crypto.generateKeyPairSync("rsa", {
+      modulusLength: 2048,
+      privateKeyEncoding: {
+        type: "pkcs8",
+        format: "pem",
+        cipher: "aes-256-cbc",
+        passphrase
+      },
+      publicKeyEncoding: {
+        type: "spki",
+        format: "pem"
+      }
+    });
+    const tokenService = createTokenService({
+      privateKey,
+      privateKeyPassphrase: passphrase,
+      publicKey,
+      now: () => 1000
+    });
+
+    // When : un JWT est genere avec la passphrase
+    const token = await tokenService.generate({
+      id: 24,
+      email: "passphrase@gmail.com"
+    });
+
+    // Then : le token est valide avec la cle publique correspondante
+    await expect(tokenService.verify(token)).resolves.toMatchObject({
+      sub: "24",
+      email: "passphrase@gmail.com"
+    });
+  });
+});
+
+describe("tokenService JWT - cas d'erreur", () => {
+  it("TU 17 - refuse un JWT expire", async () => {
+    // Given : un JWT cree avant sa date d'expiration
+    const { createTokenService } = require("../../src/services/tokenService");
+    const { privateKey, publicKey } = createJwtKeyPair();
+    let currentTimestamp = 1000;
+    const tokenService = createTokenService({
+      privateKey,
+      publicKey,
+      now: () => currentTimestamp
+    });
+    const token = await tokenService.generate({
+      id: 42,
+      email: "expired@gmail.com"
+    });
+
+    // When : l'application verifie le token apres plus d'un jour
+    currentTimestamp = 87401;
+
+    // Then : le token est refuse
+    await expect(tokenService.verify(token)).resolves.toBeNull();
+  });
+
+  it("TU 18 - refuse un JWT modifie", async () => {
+    // Given : un JWT dont le payload est modifie sans nouvelle signature
+    const { createTokenService } = require("../../src/services/tokenService");
+    const { privateKey, publicKey } = createJwtKeyPair();
+    const tokenService = createTokenService({
+      privateKey,
+      publicKey,
+      now: () => 1000
+    });
+    const token = await tokenService.generate({
+      id: 42,
+      email: "jwt@gmail.com"
+    });
+    const parts = token.split(".");
+    const tamperedPayload = Buffer.from(
+      JSON.stringify({
+        ...decodeJwtPart(token, 1),
+        email: "attacker@gmail.com"
+      })
+    ).toString("base64url");
+    const tamperedToken = `${parts[0]}.${tamperedPayload}.${parts[2]}`;
+
+    // When : l'application verifie le token
+    // Then : la signature ne correspond plus
+    await expect(tokenService.verify(tamperedToken)).resolves.toBeNull();
   });
 });
 

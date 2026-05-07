@@ -203,3 +203,43 @@ Then : les sons d'achat d'upgrade sont joues l'un apres l'autre
 Given : un utilisateur est connecte et possede une upgrade qui genere automatiquement des cookies  
 When : l'autocliqueur ajoute des cookies au compteur  
 Then : aucun son de clic ni d'upgrade n'est lance automatiquement
+
+# TDD - Miscs
+
+## User stories
+
+- En tant qu’utilisateur, je souhaite améliorer l’ergonomie et l’immersion de l’application grâce à des raccourcis, un meilleur affichage des montants et des effets sonores.
+
+## Criteres d'acceptation
+
+- Les montants sont formatés en K, M, Md, T.
+- Un bouton de log-out permet de se déconnecter et redirige vers la page de connexion.
+- La sidebar contient des raccourcis vers les types d’upgrades.
+- Des sons sont joués lors des animations d’avion de chasse et de missile.
+
+## Tests E2E
+
+### E2E 1 - Formatage des montants
+
+Given : un utilisateur est connecté et possède un montant de cookies supérieur ou égal à 1000  
+When : le compteur affiche les montants du joueur  
+Then : les montants sont formatés avec l'unité adaptée, par exemple 1500 devient 1.5K
+
+### E2E 2 - Déconnexion avec le bouton de log-out
+
+Given : un utilisateur est connecté et arrive sur la page du jeu  
+When : il clique sur le bouton de log-out  
+Then : sa session est supprimée et il est redirigé vers la page de connexion
+
+### E2E 3 - Raccourcis vers les catégories d'upgrades
+
+Given : un utilisateur est connecté et voit la sidebar avec les raccourcis d'upgrades  
+When : il clique sur un raccourci de catégorie d'upgrade  
+Then : la catégorie d'upgrade correspondante est ouverte
+
+### E2E 4 - Sons pendant les animations
+
+Given : un utilisateur est connecté et déclenche une animation d'avion de chasse ou de missile  
+When : l'animation démarre  
+Then : le son associé à cette animation est joué correctement
+

@@ -1,11 +1,12 @@
 const dotenv = require("dotenv");
+
+dotenv.config();
+
 const { getDbPath } = require("../config/appConfig");
 const {
   DEFAULT_USER,
   createSqliteUserRepository
 } = require("../repositories/sqliteUserRepository");
-
-dotenv.config();
 
 async function seedDefaultUser() {
   const repository = createSqliteUserRepository(getDbPath());

@@ -449,6 +449,7 @@
   .shop-panel {
     position: relative;
     display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
     align-content: start;
     align-self: stretch;
     min-height: 0;
@@ -500,36 +501,13 @@
     overflow-y: auto;
   }
 
-  .shop-toggle {
-    display: grid;
-    width: 48px;
-    height: 48px;
-    place-items: center;
-    padding: 0;
-    color: var(--gold);
-    background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.14), transparent 40%),
-      rgba(0, 19, 47, 0.9);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
-  }
-
-  .shop-toggle .ph {
-    font-size: 1.5rem;
-  }
-
   .shop-actions {
+    grid-row: 1;
     display: flex;
     justify-content: flex-end;
     align-items: flex-start;
     gap: 16px;
     margin-bottom: 18px;
-  }
-
-  .shop-toolbar {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin: 0;
   }
 
   .shop-filter {
@@ -562,11 +540,18 @@
     font-size: 2rem;
   }
 
+  .shop-head {
+    grid-row: 2;
+  }
+
   .shop-list {
+    grid-row: 3;
     display: grid;
+    align-content: start;
     gap: 14px;
     margin-top: 28px;
     padding-bottom: 40px;
+    min-height: 0;
     overflow: visible;
   }
 
@@ -674,24 +659,56 @@
     cursor: not-allowed;
   }
 
+  .shop-logout {
+    grid-row: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 48px;
+    margin-top: 18px;
+    color: #fff7e6;
+    font-family: "Be Vietnam Pro", sans-serif;
+    font-weight: 800;
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 40%),
+      rgba(190, 9, 48, 0.78);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  }
+
+  .shop-logout .ph {
+    font-size: 1.35rem;
+  }
+
+  .shop-logout:hover {
+    filter: brightness(1.08);
+  }
+
   .game-shell.is-shop-collapsed .shop-panel {
     padding: 16px 12px;
   }
 
   .game-shell.is-shop-collapsed .shop-actions {
-    display: flex;
+    display: grid;
     justify-content: center;
+    gap: 10px;
     margin-bottom: 0;
   }
 
-  .game-shell.is-shop-collapsed .shop-toggle {
-    margin: 0;
-  }
-
   .game-shell.is-shop-collapsed .shop-edge-chevron,
-  .game-shell.is-shop-collapsed .shop-toolbar,
   .game-shell.is-shop-collapsed .shop-head,
   .game-shell.is-shop-collapsed .shop-list {
+    display: none;
+  }
+
+  .game-shell.is-shop-collapsed .shop-logout {
+    align-self: end;
+    width: 48px;
+    padding: 0;
+  }
+
+  .game-shell.is-shop-collapsed .shop-logout span {
     display: none;
   }
 
