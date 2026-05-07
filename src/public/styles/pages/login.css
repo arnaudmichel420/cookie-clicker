@@ -1,10 +1,10 @@
 @layer pages {
   body.page-login .page-shell {
     display: grid;
-    grid-template-columns: minmax(320px, 520px);
+    grid-template-columns: minmax(0, 520px);
     align-items: center;
     justify-content: center;
-    padding: 32px;
+    padding: clamp(20px, 5vw, 48px);
   }
 
   @media (max-width: 720px) {
