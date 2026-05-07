@@ -8,8 +8,8 @@
   const effectsLayer = document.getElementById("effects-layer");
   const characterEffects = document.getElementById("character-effects");
   const gameShell = document.querySelector(".game-shell");
+  const logoutButton = document.getElementById("logout-button");
   const shopClose = document.getElementById("shop-close");
-  const shopToggle = document.getElementById("shop-toggle");
   const shopFilters = Array.from(document.querySelectorAll("[data-upgrade-filter]"));
   const upgradeCards = Array.from(document.querySelectorAll("[data-upgrade-key]"));
   const frames = [
@@ -20,12 +20,13 @@
     button: cookieButton,
     frames: frames
   });
-  const gameEffects = window.createGameEffects({
-    layer: effectsLayer,
-    characterLayer: characterEffects
-  });
   const gameSoundEffects = window.createGameSoundEffects({
     Audio: window.Audio
+  });
+  const gameEffects = window.createGameEffects({
+    layer: effectsLayer,
+    characterLayer: characterEffects,
+    sounds: gameSoundEffects
   });
   let stateRefreshHandle = null;
   let activeFilter = null;
@@ -51,15 +52,15 @@
     const canAfford = stats.cookies >= upgrade.currentPrice;
 
     ownedLabel.textContent = upgrade.owned;
-    priceLabel.textContent = `$${upgrade.currentPrice}`;
+    priceLabel.textContent = `$${window.formatAmount(upgrade.currentPrice)}`;
     buyButton.disabled = !canAfford;
     buyButton.dataset.upgradePrice = String(upgrade.currentPrice);
   }
 
   function renderStats(data) {
-    cookieCount.textContent = `$${data.cookies}`;
-    cookiesPerSecond.textContent = data.cookiesPerSecond;
-    cookiesPerClick.textContent = data.cookiesPerClick;
+    cookieCount.textContent = `$${window.formatAmount(data.cookies)}`;
+    cookiesPerSecond.textContent = window.formatAmount(data.cookiesPerSecond);
+    cookiesPerClick.textContent = window.formatAmount(data.cookiesPerClick);
     upgradeCount.textContent = data.upgradeCount;
     upgradeCards.forEach((card) => renderUpgradeCard(data, card));
   }
@@ -84,10 +85,6 @@
 
   function setShopCollapsed(isCollapsed) {
     gameShell.classList.toggle("is-shop-collapsed", isCollapsed);
-    shopToggle.setAttribute(
-      "aria-label",
-      isCollapsed ? "Ouvrir la boutique" : "Rétracter la boutique"
-    );
   }
 
   function disableGame(message) {
@@ -173,20 +170,13 @@
     });
   }
 
-  shopToggle.addEventListener("click", () => {
-    const isCollapsed = gameShell.classList.contains("is-shop-collapsed");
-
-    if (isCollapsed) {
-      setShopCollapsed(false);
-      applyUpgradeFilter(null);
-      return;
-    }
-
+  shopClose.addEventListener("click", () => {
     setShopCollapsed(true);
   });
 
-  shopClose.addEventListener("click", () => {
-    setShopCollapsed(true);
+  logoutButton.addEventListener("click", async () => {
+    await window.authClient.logout();
+    window.redirectTo(window.AUTH_ROUTES.login);
   });
 
   applyUpgradeFilter(activeFilter);

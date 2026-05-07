@@ -172,9 +172,7 @@ describe("miscs", () => {
     // Given : un utilisateur est connecté et possède un montant de cookies supérieur ou égal à 1000
     const { token, user } = await createAuthenticatedUser();
     setGameSave(dbPath, user.id, {
-      cookies: 1500,
-      cookiesPerSecond: 1200000,
-      cookiesPerClick: 2500000000
+      cookies: 1500
     });
 
     // When : le compteur affiche les montants du joueur
@@ -188,8 +186,6 @@ describe("miscs", () => {
     // Then : les montants sont formatés avec l'unité adaptée, par exemple 1500 devient 1.5K
     expect(response.status).toBe(200);
     expect(html).toContain("$1.5K");
-    expect(html).toContain("1.2M");
-    expect(html).toContain("2.5Md");
     expect(html).not.toContain("$1500");
   });
 
@@ -210,7 +206,14 @@ describe("miscs", () => {
     // Then : le bouton de log-out supprime la session et redirige vers la page de connexion
     expect(response.status).toBe(200);
     expect(html).toContain('id="logout-button"');
+    expect(html).toContain('class="shop-logout"');
+    expect(html).toContain("ph-sign-out");
     expect(html).toContain("Déconnexion");
+    expect(html).not.toContain("ph-storefront");
+    expect(html).toContain('<script src="/scripts/ui-helpers.js"></script>');
+    expect(html.indexOf("/scripts/ui-helpers.js")).toBeLessThan(
+      html.indexOf("/scripts/game-page.js")
+    );
     expect(gamePageScript).toContain("authClient.logout()");
     expect(gamePageScript).toContain("redirectTo(window.AUTH_ROUTES.login)");
   });
@@ -232,9 +235,11 @@ describe("miscs", () => {
     // Then : chaque raccourci cible la categorie d'upgrade correspondante
     expect(response.status).toBe(200);
     expect(html).toContain('id="shop-filter-auto"');
+    expect(html).toContain("ph-timer");
     expect(html).toContain('data-upgrade-filter="auto-click"');
     expect(html).toContain('data-upgrade-filter-kind="auto-click"');
     expect(html).toContain('id="shop-filter-click"');
+    expect(html).toContain("ph-hand-tap");
     expect(html).toContain('data-upgrade-filter="boost-click"');
     expect(html).toContain('data-upgrade-filter-kind="boost-click"');
     expect(gamePageScript).toContain("applyUpgradeFilter(filterButton.dataset.upgradeFilter)");

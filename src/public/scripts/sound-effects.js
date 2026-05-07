@@ -1,6 +1,8 @@
 (function attachGameSoundEffects(windowObject) {
-  const BACKGROUND_MUSIC_VOLUME = 0.09;
+  const BACKGROUND_MUSIC_VOLUME = 0.04;
   const CLICK_SOUND_VOLUME = 0.09;
+  const FIGHTER_SOUND_VOLUME = 0.45;
+  const MISSILE_SOUND_VOLUME = 0.05;
   const CLICK_SOUND_LIMIT_PER_SECOND = 2;
 
   function pickRandomSource(sources = [], random = Math.random) {
@@ -120,10 +122,24 @@
       return queuedSound;
     }
 
+    function playFighterSound() {
+      return playSource(soundEffects.animation?.fighter, {
+        volume: FIGHTER_SOUND_VOLUME
+      });
+    }
+
+    function playMissileSound() {
+      return playSource(soundEffects.animation?.missile, {
+        volume: MISSILE_SOUND_VOLUME
+      });
+    }
+
     return {
       playClickSound,
       playUpgradeSound,
       startBackgroundMusic,
+      playFighterSound,
+      playMissileSound
     };
   }
 
